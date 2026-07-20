@@ -3,69 +3,21 @@ import { Link } from 'react-router-dom';
 
 export default function Home() {
   return (
-    <div className="space-y-8">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg shadow-lg p-12">
-        <h1 className="text-4xl font-bold mb-4">Welcome to NagarSeva</h1>
-        <p className="text-xl mb-6">
-          A platform to report civic grievances and track their resolution
-        </p>
-        <Link
-          to="/report"
-          className="inline-block bg-white text-blue-600 font-bold py-3 px-8 rounded-lg hover:bg-blue-50 transition"
-        >
-          Report an Issue
-        </Link>
-      </section>
-
-      {/* Features Section */}
-      <section className="grid md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-          <div className="text-4xl mb-4">📋</div>
-          <h2 className="text-xl font-bold mb-2">Report Issues</h2>
-          <p className="text-gray-600">
-            Easily report civic problems like road damage, water issues, and more.
-          </p>
+    <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="text-center">
+        <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-4">Report. Track. Resolve.</h1>
+        <p className="text-xl text-gray-600 mb-8">NagarSeva empowers citizens to report civic issues with location and photos.</p>
+        <div className="flex flex-wrap justify-center gap-4">
+          <Link to="/report" className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition">Report an Issue</Link>
+          <Link to="/dashboard" className="bg-gray-200 text-gray-800 px-8 py-3 rounded-lg hover:bg-gray-300 transition">View Dashboard</Link>
         </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-          <div className="text-4xl mb-4">🔍</div>
-          <h2 className="text-xl font-bold mb-2">Track Status</h2>
-          <p className="text-gray-600">
-            Monitor the status of your complaints in real-time.
-          </p>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-          <div className="text-4xl mb-4">📊</div>
-          <h2 className="text-xl font-bold mb-2">View Dashboard</h2>
-          <p className="text-gray-600">
-            See all public complaints and their resolution status.
-          </p>
-        </div>
-      </section>
-
-      {/* Call to Action */}
-      <section className="bg-gray-100 rounded-lg p-8 text-center">
-        <h2 className="text-2xl font-bold mb-4">Get Started</h2>
-        <p className="text-gray-600 mb-6">
-          Help improve your city by reporting issues you encounter
-        </p>
-        <div className="flex justify-center gap-4">
-          <Link
-            to="/report"
-            className="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition"
-          >
-            Report Now
-          </Link>
-          <Link
-            to="/dashboard"
-            className="bg-gray-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-700 transition"
-          >
-            View Dashboard
-          </Link>
-        </div>
-      </section>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16">
+        <div className="bg-white rounded-lg shadow p-4 text-center"><p className="text-2xl font-bold text-blue-600">1.2K+</p><p className="text-sm text-gray-600">Complaints Resolved</p></div>
+        <div className="bg-white rounded-lg shadow p-4 text-center"><p className="text-2xl font-bold text-blue-600">98%</p><p className="text-sm text-gray-600">Citizen Satisfaction</p></div>
+        <div className="bg-white rounded-lg shadow p-4 text-center"><p className="text-2xl font-bold text-blue-600">24/7</p><p className="text-sm text-gray-600">AI-Powered Routing</p></div>
+        <div className="bg-white rounded-lg shadow p-4 text-center"><p className="text-2xl font-bold text-blue-600">5</p><p className="text-sm text-gray-600">Active Wards</p></div>
+      </div>
     </div>
   );
 }

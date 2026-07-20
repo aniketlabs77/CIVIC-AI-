@@ -6,132 +6,49 @@ export default function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-
+    e.preventDefault(); setError('');
+    if (!name || !email || !password || !confirm) { setError('All fields are required'); return; }
+    if (password !== confirm) { setError('Passwords do not match'); return; }
+    if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
     setLoading(true);
-
     try {
       await apiClient.post('/api/auth/register', { name, email, password });
-      setError('');
       navigate('/login');
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+      setError(err.response?.data?.error || 'Registration failed');
+    } finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Create your account</h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Already have an account?{' '}
-          <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-            Sign in
-          </Link>
-        </p>
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
-            </div>
-          )}
-
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="name" className="sr-only">Full name</label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                autoComplete="name"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Full name"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="email" className="sr-only">Email address</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="sr-only">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Password (min 6 characters)"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="confirmPassword" className="sr-only">Confirm password</label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Confirm password"
-              />
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                {loading ? 'Creating account...' : 'Create account'}
-              </button>
-            </div>
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[#07080a] relative">
+      <div className="aurora-bg"><div className="aurora-blade-1"></div><div className="aurora-blade-2"></div><div className="aurora-blade-3"></div><div className="aurora-grain"></div><div className="aurora-vignette"></div></div>
+      <div className="relative z-10 w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <svg className="w-8 h-8 text-[#ff2f3a]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            <span className="text-2xl font-bold font-manrope text-white">NagarSeva</span>
+          </div>
+          <h2 className="text-3xl font-bold text-white font-manrope">Create Account</h2>
+          <p className="text-[#9c9c9d] mt-2">Join the civic grievance platform</p>
+        </div>
+        <div className="glass-dark rounded-2xl p-8 border border-white/10 shadow-2xl">
+          {error && <div className="mb-4 p-4 bg-[#ff2f3a]/20 border border-[#ff2f3a]/30 rounded-xl text-[#ff2f3a] text-sm">{error}</div>}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div><label className="block text-sm font-medium text-[#9c9c9d] mb-2">Full Name</label><input type="text" value={name} onChange={e=>setName(e.target.value)} className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#ff2f3a] transition-all" placeholder="Your name" required /></div>
+            <div><label className="block text-sm font-medium text-[#9c9c9d] mb-2">Email</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#ff2f3a] transition-all" placeholder="your@email.com" required /></div>
+            <div><label className="block text-sm font-medium text-[#9c9c9d] mb-2">Password</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#ff2f3a] transition-all" placeholder="Min 6 characters" required /></div>
+            <div><label className="block text-sm font-medium text-[#9c9c9d] mb-2">Confirm Password</label><input type="password" value={confirm} onChange={e=>setConfirm(e.target.value)} className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#ff2f3a] transition-all" placeholder="Confirm password" required /></div>
+            <button type="submit" disabled={loading} className="w-full py-3 bg-[#ff2f3a] hover:bg-[#e02a34] text-white font-bold rounded-full transition-all disabled:opacity-50">{loading ? 'Creating...' : 'Create Account'}</button>
           </form>
+          <div className="mt-6 text-center"><p className="text-sm text-[#9c9c9d]">Already have an account? <Link to="/login" className="text-[#ff2f3a] hover:text-[#ff6b4a] transition-colors">Sign In</Link></p></div>
         </div>
       </div>
     </div>
   );
 }
-

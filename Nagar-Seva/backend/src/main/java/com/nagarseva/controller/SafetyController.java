@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -15,29 +14,21 @@ public class SafetyController {
     @Autowired
     private ComplaintService complaintService;
 
-    /**
-     * GET /api/safety/heatmap - Get safety heatmap data
-     * Returns all safety-relevant complaints with riskLevel and timeOfDay
-     */
-    @GetMapping("/heatmap")
-    public ResponseEntity<List<Map<String, Object>>> getSafetyHeatmap() {
-        List<Map<String, Object>> heatmap = complaintService.getSafetyHeatmap();
-        return ResponseEntity.ok(heatmap);
-    }
-
-    /**
-     * GET /api/safety/route-check - Check route safety
-     * Query params: startLat, startLng, endLat, endLng
-     * Returns warning if HIGH risk safety incidents are near the path
-     */
-    @GetMapping("/route-check")
+    @PostMapping("/check-route")
     public ResponseEntity<Map<String, Object>> checkRouteSafety(
-            @RequestParam double startLat,
-            @RequestParam double startLng,
-            @RequestParam double endLat,
-            @RequestParam double endLng) {
-        
-        Map<String, Object> result = complaintService.checkRouteSafety(startLat, startLng, endLat, endLng);
+            @RequestBody Map<String, Double> routeData) {
+        Double startLat = routeData.get("startLat");
+        Double startLng = routeData.get("startLng");
+        Double endLat = routeData.get("endLat");
+        Double endLng = routeData.get("endLng");
+
+        if (startLat == null || startLng == null || endLat == null || endLng == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        Map<String, Object> result = complaintService.checkRouteSafety(
+            startLat, startLng, endLat, endLng
+        );
         return ResponseEntity.ok(result);
     }
 }

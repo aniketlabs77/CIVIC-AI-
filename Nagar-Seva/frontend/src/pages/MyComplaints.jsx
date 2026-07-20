@@ -5,213 +5,48 @@ export default function MyComplaints() {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filterStatus, setFilterStatus] = useState('ALL');
 
-  useEffect(() => {
-    fetchMyComplaints();
-  }, []);
+  useEffect(() => { fetchMyComplaints(); }, []);
 
   const fetchMyComplaints = async () => {
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
-      const response = await apiClient.get('/api/complaints/my');
-      setComplaints(response.data);
-    } catch (err) {
-      setError('Failed to load your complaints. Please try again later.');
-      console.error('Error:', err);
-    } finally {
-      setLoading(false);
-    }
+      const res = await apiClient.get('/api/complaints/my');
+      setComplaints(Array.isArray(res.data) ? res.data : []);
+    } catch (err) { setError('Failed to load'); } finally { setLoading(false); }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'OPEN':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'IN_PROGRESS':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'RESOLVED':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'ESCALATED':
-        return 'bg-red-200 text-red-900 border-red-300 font-bold';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
+  const statusColor = (s) => ({ OPEN:'bg-yellow-100 text-yellow-800', IN_PROGRESS:'bg-blue-100 text-blue-800', RESOLVED:'bg-green-100 text-green-800', ESCALATED:'bg-red-100 text-red-800' }[s] || 'bg-gray-100 text-gray-800');
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'HIGH':
-        return 'bg-red-100 text-red-800';
-      case 'MEDIUM':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'LOW':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const filteredComplaints = filterStatus === 'ALL'
-    ? complaints
-    : complaints.filter(c => c.status === filterStatus);
+  if (loading) return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div></div>;
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">My Complaints</h1>
-
-      {/* Filter */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <label className="block text-gray-700 font-bold mb-2">
-          Filter by Status
-        </label>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="w-full md:w-48 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="ALL">All Complaints</option>
-          <option value="OPEN">Open</option>
-          <option value="IN_PROGRESS">In Progress</option>
-          <option value="RESOLVED">Resolved</option>
-          <option value="ESCALATED">Escalated</option>
-        </select>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-100 text-red-800 p-4 rounded-lg mb-8">
-          {error}
-        </div>
-      )}
-
-      {/* Loading State */}
-      {loading && (
-        <div className="text-center py-12">
-          <p className="text-gray-600 text-lg">Loading your complaints...</p>
-        </div>
-      )}
-
-      {/* Complaints List */}
-      {!loading && !error && (
-        <div>
-          {filteredComplaints.length > 0 ? (
-            <div className="space-y-4">
-              {filteredComplaints.map((complaint) => (
-                <div
-                  key={complaint.id}
-                  className={`bg-white rounded-lg shadow-md hover:shadow-lg transition p-4 border-l-4 ${
-                    complaint.status === 'OPEN' ? 'border-red-500' :
-                    complaint.status === 'IN_PROGRESS' ? 'border-yellow-500' :
-                    complaint.status === 'RESOLVED' ? 'border-green-500' : 'border-red-600'
-                  }`}
-                >
-                  <div className="grid md:grid-cols-5 gap-4 mb-3">
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold">ID</p>
-                      <p className="text-lg font-bold">{complaint.id}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold">Category</p>
-                      <p className="font-semibold">{complaint.category}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold">Ward</p>
-                      <p className="font-semibold">{complaint.ward || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold">Location</p>
-                      <p className="font-semibold text-sm">{complaint.location}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold">Status</p>
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold ${getStatusColor(complaint.status)}`}>
-                        {complaint.status}
-                      </span>
-                    </div>
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold text-gray-800 mb-2">📋 My Complaints</h1>
+      <p className="text-gray-600 mb-6">Track all complaints you have reported</p>
+      {error && <div className="p-4 bg-red-100 border border-red-400 rounded-lg text-red-700 mb-6">{error} <button onClick={fetchMyComplaints} className="ml-4 px-4 py-1 bg-red-600 text-white rounded hover:bg-red-700">Retry</button></div>}
+      {complaints.length === 0 ? <div className="bg-gray-100 rounded-lg p-12 text-center"><p className="text-2xl text-gray-400 mb-2">📭</p><p className="text-gray-600">You haven't reported any complaints yet.</p><a href="/report" className="mt-4 inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Report an Issue</a></div> : (
+        <div className="space-y-4">
+          {complaints.map(c => (
+            <div key={c.id} className="bg-white rounded-lg shadow p-6 hover:shadow-md transition">
+              <div className="flex flex-wrap justify-between items-start gap-4">
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center gap-3 mb-2">
+                    <h3 className="text-lg font-semibold text-gray-800">#{c.id} - {c.category}</h3>
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full ${statusColor(c.status)}`}>{c.status}</span>
+                    {c.escalated && <span className="px-3 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">⚠️ Escalated</span>}
                   </div>
-
-                  {/* AI Routing Info Row */}
-                  <div className="grid md:grid-cols-4 gap-4 mb-3 p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold mb-1">Routed Authority</p>
-                      <p className="text-sm font-semibold text-blue-700">{complaint.routedAuthority || 'Not assigned'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold mb-1">Priority</p>
-                      {complaint.priority && (
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold ${getPriorityColor(complaint.priority)}`}>
-                          {complaint.priority}
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold mb-1">Escalated</p>
-                      <p className="text-sm">{complaint.escalated ? '⚠️ Yes' : '✅ No'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold mb-1">Created</p>
-                      <p className="text-sm">{new Date(complaint.createdAt).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-
-                  {/* AI Summary */}
-                  {complaint.aiSummary && (
-                    <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-gray-600 text-xs font-semibold mb-1">AI Summary</p>
-                      <p className="text-gray-900 text-sm">{complaint.aiSummary}</p>
-                    </div>
-                  )}
-
-                  <div className="mb-3">
-                    <p className="text-gray-600 text-xs font-semibold mb-1">Description</p>
-                    <p className="text-gray-900 line-clamp-2">{complaint.description}</p>
-                  </div>
-
-                  {/* Resolution Details */}
-                  {complaint.status === 'RESOLVED' && (complaint.resolutionPhotoUrl || complaint.resolutionNote) && (
-                    <div className="mb-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <p className="text-gray-600 text-xs font-semibold mb-2 flex items-center gap-1">
-                        <span className="text-green-600">✓</span> Resolution Details
-                      </p>
-                      
-                      {complaint.resolutionPhotoUrl && (
-                        <div className="mb-2">
-                          <p className="text-gray-600 text-xs font-semibold mb-1">Resolution Photo</p>
-                          <img
-                            src={complaint.resolutionPhotoUrl}
-                            alt="Resolution"
-                            className="max-h-48 rounded-lg border"
-                          />
-                        </div>
-                      )}
-                      
-                      {complaint.resolutionNote && (
-                        <div>
-                          <p className="text-gray-600 text-xs font-semibold mb-1">Resolution Note</p>
-                          <p className="text-gray-900 text-sm">{complaint.resolutionNote}</p>
-                        </div>
-                      )}
-                      
-                      {complaint.resolvedAt && (
-                        <p className="text-xs text-gray-500 mt-2">
-                          Resolved on: {new Date(complaint.resolvedAt).toLocaleString()}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                  <p className="text-gray-700">{c.description}</p>
+                  <div className="mt-2 text-sm text-gray-500"><p>📍 {c.location}</p><p>🏢 {c.ward}</p><p>📅 {new Date(c.createdAt).toLocaleString()}</p>{c.routedAuthority && <p className="text-blue-600">🏛️ Routed to: {c.routedAuthority}</p>}{c.resolvedAt && <p className="text-green-600">✅ Resolved: {new Date(c.resolvedAt).toLocaleString()}</p>}</div>
+                  {c.status==='RESOLVED' && c.resolutionNote && <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg"><p className="text-sm font-semibold text-green-800">✅ Resolution</p><p className="text-sm text-gray-700 mt-1">{c.resolutionNote}</p>{c.resolutionPhotoUrl && <img src={c.resolutionPhotoUrl} alt="Proof" className="mt-2 max-h-48 rounded-lg"/>}</div>}
+                  {c.aiSummary && <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg"><p className="text-sm font-semibold text-blue-800">🤖 AI Summary</p><p className="text-sm text-gray-900">{c.aiSummary}</p></div>}
+                  {c.photoData && <img src={c.photoData} alt="Complaint" className="mt-3 max-h-48 rounded-lg"/>}
                 </div>
-              ))}
+              </div>
             </div>
-          ) : (
-            <div className="bg-gray-100 rounded-lg p-8 text-center">
-              <p className="text-gray-600">No complaints found for the selected filter.</p>
-            </div>
-          )}
+          ))}
         </div>
       )}
     </div>
   );
 }
-

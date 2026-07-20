@@ -1,5 +1,6 @@
 package com.nagarseva.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -39,6 +40,8 @@ public class User {
     @Column
     private LocalDateTime lastLoginAt;
 
+    // ✅ FIX: Add @JsonIgnore to break the infinite loop!
+    @JsonIgnore
     @OneToMany(mappedBy = "citizen", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Complaint> complaints;
 

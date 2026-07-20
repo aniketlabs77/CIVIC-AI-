@@ -1,5 +1,6 @@
 package com.nagarseva.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
@@ -44,7 +45,7 @@ public class Complaint {
     @Column
     private String photoUrl;
 
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "TEXT")
     private String photoData;
 
     @Column
@@ -70,22 +71,22 @@ public class Complaint {
     @Column
     private Boolean escalated = false;
 
-    // New fields for safety heatmap
     @Column
-    private String issueType; // SAFETY, INFRASTRUCTURE, etc.
+    private String issueType;
 
-    @Column
-    private String resolutionPhotoUrl; // base64 encoded resolution photo
+    @Column(columnDefinition = "TEXT")  // ✅ FIXED: TEXT instead of default VARCHAR(255)
+    private String resolutionPhotoUrl;
 
     @Column(columnDefinition = "TEXT")
     private String resolutionNote;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "citizen_id")
+    @JsonIgnore
     private User citizen;
 
-    public Complaint() {
-    }
+    // Constructors, getters, setters...
+    public Complaint() {}
 
     public Complaint(String category, String description, String location, String ward, Double latitude, Double longitude) {
         this.category = category;
@@ -98,166 +99,66 @@ public class Complaint {
         this.escalated = false;
     }
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
+    // GETTERS AND SETTERS
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 
-    public String getCategory() {
-        return category;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public void setCategory(String category) {
-        this.category = category;
-    }
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
 
-    public String getDescription() {
-        return description;
-    }
+    public String getWard() { return ward; }
+    public void setWard(String ward) { this.ward = ward; }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
 
-    public String getLocation() {
-        return location;
-    }
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 
-    public void setLocation(String location) {
-        this.location = location;
-    }
+    public String getPhotoUrl() { return photoUrl; }
+    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
 
-    public String getWard() {
-        return ward;
-    }
+    public String getPhotoData() { return photoData; }
+    public void setPhotoData(String photoData) { this.photoData = photoData; }
 
-    public void setWard(String ward) {
-        this.ward = ward;
-    }
+    public String getRoutedAuthority() { return routedAuthority; }
+    public void setRoutedAuthority(String routedAuthority) { this.routedAuthority = routedAuthority; }
 
-    public Double getLatitude() {
-        return latitude;
-    }
+    public ComplaintStatus getStatus() { return status; }
+    public void setStatus(ComplaintStatus status) { this.status = status; }
 
-    public void setLatitude(Double latitude) {
-        this.latitude = latitude;
-    }
+    public String getAiSummary() { return aiSummary; }
+    public void setAiSummary(String aiSummary) { this.aiSummary = aiSummary; }
 
-    public Double getLongitude() {
-        return longitude;
-    }
+    public ComplaintPriority getPriority() { return priority; }
+    public void setPriority(ComplaintPriority priority) { this.priority = priority; }
 
-    public void setLongitude(Double longitude) {
-        this.longitude = longitude;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public String getPhotoUrl() {
-        return photoUrl;
-    }
+    public LocalDateTime getResolvedAt() { return resolvedAt; }
+    public void setResolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; }
 
-    public void setPhotoUrl(String photoUrl) {
-        this.photoUrl = photoUrl;
-    }
+    public Boolean getEscalated() { return escalated; }
+    public void setEscalated(Boolean escalated) { this.escalated = escalated; }
 
-    public String getPhotoData() {
-        return photoData;
-    }
+    public String getIssueType() { return issueType; }
+    public void setIssueType(String issueType) { this.issueType = issueType; }
 
-    public void setPhotoData(String photoData) {
-        this.photoData = photoData;
-    }
+    public String getResolutionPhotoUrl() { return resolutionPhotoUrl; }
+    public void setResolutionPhotoUrl(String resolutionPhotoUrl) { this.resolutionPhotoUrl = resolutionPhotoUrl; }
 
-    public String getRoutedAuthority() {
-        return routedAuthority;
-    }
+    public String getResolutionNote() { return resolutionNote; }
+    public void setResolutionNote(String resolutionNote) { this.resolutionNote = resolutionNote; }
 
-    public void setRoutedAuthority(String routedAuthority) {
-        this.routedAuthority = routedAuthority;
-    }
-
-    public ComplaintStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(ComplaintStatus status) {
-        this.status = status;
-    }
-
-    public String getAiSummary() {
-        return aiSummary;
-    }
-
-    public void setAiSummary(String aiSummary) {
-        this.aiSummary = aiSummary;
-    }
-
-    public ComplaintPriority getPriority() {
-        return priority;
-    }
-
-    public void setPriority(ComplaintPriority priority) {
-        this.priority = priority;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getResolvedAt() {
-        return resolvedAt;
-    }
-
-    public void setResolvedAt(LocalDateTime resolvedAt) {
-        this.resolvedAt = resolvedAt;
-    }
-
-    public Boolean getEscalated() {
-        return escalated;
-    }
-
-    public void setEscalated(Boolean escalated) {
-        this.escalated = escalated;
-    }
-
-    public String getIssueType() {
-        return issueType;
-    }
-
-    public void setIssueType(String issueType) {
-        this.issueType = issueType;
-    }
-
-    public String getResolutionPhotoUrl() {
-        return resolutionPhotoUrl;
-    }
-
-    public void setResolutionPhotoUrl(String resolutionPhotoUrl) {
-        this.resolutionPhotoUrl = resolutionPhotoUrl;
-    }
-
-    public String getResolutionNote() {
-        return resolutionNote;
-    }
-
-    public void setResolutionNote(String resolutionNote) {
-        this.resolutionNote = resolutionNote;
-    }
-
-    public User getCitizen() {
-        return citizen;
-    }
-
-    public void setCitizen(User citizen) {
-        this.citizen = citizen;
-    }
+    public User getCitizen() { return citizen; }
+    public void setCitizen(User citizen) { this.citizen = citizen; }
 
     @Override
     public String toString() {
@@ -276,5 +177,4 @@ public class Complaint {
                 ", issueType='" + issueType + '\'' +
                 '}';
     }
-
 }
