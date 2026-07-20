@@ -10,14 +10,25 @@ export default function PublicDashboard() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const fetchData = async () => {
-    setLoading(true); setError('');
-    try {
-      const [sRes, cRes] = await Promise.all([apiClient.get('/api/admin/stats'), apiClient.get('/api/complaints')]);
-      setStats(sRes.data);
-      setComplaints(Array.isArray(cRes.data) ? cRes.data : []);
-    } catch (err) { setError('Failed to load dashboard'); } finally { setLoading(false); }
-  };
+const fetchData = async () => {
+  setLoading(true);
+  setError('');
+  try {
+    const [statsRes, complaintsRes] = await Promise.all([
+      apiClient.get('/api/admin/stats'),   // ✅ FIXED
+      apiClient.get('/api/complaints')
+    ]);
+
+    setStats(statsRes.data);
+    const data = Array.isArray(complaintsRes.data) ? complaintsRes.data : [];
+    setComplaints(data);
+  } catch (err) {
+    setError('Failed to load dashboard data');
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const getWardStats = () => {
     const map = {};
