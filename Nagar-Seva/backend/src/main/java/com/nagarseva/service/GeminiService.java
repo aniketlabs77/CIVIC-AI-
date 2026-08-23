@@ -385,7 +385,42 @@ public class GeminiService {
     private String generateFallbackChatResponse(String query) {
         String lower = query.toLowerCase().trim();
 
-        // 1. Pothole & Road Damage Queries
+        // 1. Complaint Limits & Quotas
+        if (lower.contains("how many") || lower.contains("limit") || lower.contains("quota") || lower.contains("can a person") || lower.contains("can i report")) {
+            return "📋 **Complaint Limits on NagarSeva:**\n\n" +
+                    "- **Unlimited Submissions:** There is **no limit** on how many complaints a citizen can report! You can submit as many civic grievances as you encounter.\n" +
+                    "- **Categories:** You can file across `Road Damage`, `Streetlight`, `Drainage`, `Illegal Dumping`, and `Unsafe Area`.\n" +
+                    "- **Tracking:** Each ticket receives a unique Tracking ID and appears in **[My Complaints](/my-complaints)**.\n" +
+                    "- **Ward Coverage:** We support Ward 1, Ward 2, and Ward 3 with real-time municipal routing.";
+        }
+
+        // 2. Image & Vision Verification Queries
+        if (lower.contains("verify") || lower.contains("image") || lower.contains("photo") || lower.contains("picture") || lower.contains("vision")) {
+            return "📸 **AI Image & Vision Verification:**\n\n" +
+                    "**Yes, NagarSeva has built-in AI Image Verification powered by Gemini Vision!**\n\n" +
+                    "1. **Citizen Submission Check:** When you upload a photo with your grievance, the AI inspects the image to confirm the defect (e.g. verifying an asphalt pothole, garbage overflow, or broken light fixture).\n" +
+                    "2. **Mandatory Resolution Proof:** Municipal officers **cannot** close a ticket without uploading an *'After-Fix Photo Proof'*.\n" +
+                    "3. **AI Resolution Audit:** The AI verifies that the after photo actually demonstrates the fix before the complaint is officially marked `RESOLVED`.\n\n" +
+                    "💡 *You can attach photos directly on the **[Report Issue](/report)** page!*";
+        }
+
+        // 3. Cost / Fees / Charges
+        if (lower.contains("cost") || lower.contains("fee") || lower.contains("charge") || lower.contains("free") || lower.contains("price")) {
+            return "🆓 **NagarSeva is 100% Free:**\n\n" +
+                    "- **Zero Citizen Fees:** Reporting complaints, tracking status, checking municipal resolution proof, and using the AI assistant is completely free.\n" +
+                    "- **Zero Map Charges:** Safe Road Navigation and hazard heatmaps use open routing with zero search fees.";
+        }
+
+        // 4. Ward & Zonal Jurisdictions
+        if (lower.contains("ward") || lower.contains("zone") || lower.contains("jurisdiction")) {
+            return "🏛️ **Ward Structure & Coverage:**\n\n" +
+                    "- **Ward 1 (Civil Lines & North Zone):** Handled by North Zonal Municipal Cell.\n" +
+                    "- **Ward 2 (Rajiv Chowk & Central Zone):** Handled by Central Commercial Zone.\n" +
+                    "- **Ward 3 (Lajpat Nagar & South Zone):** Handled by South Residential Sanitation Cell.\n\n" +
+                    "You can view ward resolution leaderboards and efficiency on the **[Public Dashboard](/dashboard)**!";
+        }
+
+        // 5. Pothole & Road Damage Queries
         if (lower.contains("pothole") || lower.contains("road") || lower.contains("asphalt") || lower.contains("pavement") || lower.contains("crater")) {
             return "🛣️ **Draft Complaint: Road Damage & Pothole**\n\n" +
                     "Here is a recommended format to submit on the **[Report Issue](/report)** page:\n\n" +
@@ -397,7 +432,7 @@ public class GeminiService {
                     "💡 *Tip: Attach a clear daytime photo of the damaged section to enable AI auto-verification!*";
         }
 
-        // 2. Streetlight & Dark Spot Queries
+        // 6. Streetlight & Dark Spot Queries
         if (lower.contains("streetlight") || lower.contains("light") || lower.contains("dark") || lower.contains("lamp") || lower.contains("unlit") || lower.contains("pole")) {
             return "💡 **Draft Complaint: Streetlight Outage**\n\n" +
                     "Here is a recommended format to submit on the **[Report Issue](/report)** page:\n\n" +
@@ -409,7 +444,7 @@ public class GeminiService {
                     "🛡️ *Note: Unlit streetlight reports immediately mark safety risk areas on our live **[Safety Map](/safety)**!*";
         }
 
-        // 3. Garbage, Solid Waste & Dumping Queries
+        // 7. Garbage, Solid Waste & Dumping Queries
         if (lower.contains("garbage") || lower.contains("dump") || lower.contains("trash") || lower.contains("waste") || lower.contains("litter") || lower.contains("sanitation")) {
             return "🗑️ **Draft Complaint: Illegal Garbage Dumping**\n\n" +
                     "Here is a recommended format to submit on the **[Report Issue](/report)** page:\n\n" +
@@ -420,7 +455,7 @@ public class GeminiService {
                     "- **Routed Department:** `Sanitation & Waste Management Department`";
         }
 
-        // 4. Drainage, Water Logging & Sewage Queries
+        // 8. Drainage, Water Logging & Sewage Queries
         if (lower.contains("drain") || lower.contains("water") || lower.contains("sewer") || lower.contains("leak") || lower.contains("flood") || lower.contains("manhole")) {
             return "🚰 **Draft Complaint: Drainage / Water Logging Issue**\n\n" +
                     "Here is a recommended format to submit on the **[Report Issue](/report)** page:\n\n" +
@@ -431,7 +466,7 @@ public class GeminiService {
                     "- **Routed Department:** `Jal Sansthan & Water Works Authority`";
         }
 
-        // 5. Safety, Crime & Unsafe Areas
+        // 9. Safety, Crime & Unsafe Areas
         if (lower.contains("safe") || lower.contains("crime") || lower.contains("unsafe") || lower.contains("harass") || lower.contains("security") || lower.contains("patrol")) {
             return "🛡️ **Safety Alert & Area Flagging**\n\n" +
                     "You can flag vulnerable spots to the Municipal Authorities & Local Patrols:\n\n" +
@@ -440,7 +475,7 @@ public class GeminiService {
                     "3. Use the **Safe Route Navigator** to compute well-lit, lower-risk travel routes.";
         }
 
-        // 6. Escalation & SLA Queries
+        // 10. Escalation & SLA Queries
         if (lower.contains("escalat") || lower.contains("sla") || lower.contains("delay") || lower.contains("time") || lower.contains("hour") || lower.contains("minute")) {
             return "⏳ **NagarSeva Automated Escalation System**\n\n" +
                     "- **Demo SLA Window:** Issues unresolved after **5 minutes** (representing standard 48-hour municipal SLA) are automatically marked as **`ESCALATED`**.\n" +
@@ -448,7 +483,7 @@ public class GeminiService {
                     "- **Citizen Tracking:** Citizens receive visual status badges in **[My Complaints](/my-complaints)** showing escalation urgency.";
         }
 
-        // 7. Tracking & Status Queries
+        // 11. Tracking & Status Queries
         if (lower.contains("track") || lower.contains("status") || lower.contains("progress") || lower.contains("check")) {
             return "🔍 **How to Track Your Grievances:**\n\n" +
                     "- **Personal Dashboard:** Visit **[My Complaints](/my-complaints)** to inspect all tickets filed by your account.\n" +
@@ -456,16 +491,16 @@ public class GeminiService {
                     "- **Status Lifecycle:** `OPEN` ➡️ `IN_PROGRESS` ➡️ `RESOLVED` (with mandatory photographic evidence).";
         }
 
-        // 8. Admin & Municipal Resolution Queries
-        if (lower.contains("admin") || lower.contains("resolve") || lower.contains("photo") || lower.contains("officer") || lower.contains("authority")) {
+        // 12. Admin & Municipal Resolution Queries
+        if (lower.contains("admin") || lower.contains("resolve") || lower.contains("officer") || lower.contains("authority") || lower.contains("mayor")) {
             return "🏢 **Municipal Resolution & Verification Standards:**\n\n" +
                     "- **Mandatory Photo Proof:** Field workers must upload an **'After Resolution' photo** before any ticket can be closed.\n" +
                     "- **AI Verification:** The AI system cross-references the before and after photos to confirm the defect has truly been fixed.\n" +
                     "- **Transparency:** Citizens can inspect the repair proof directly on their ticket card.";
         }
 
-        // 9. Greeting / General Queries
-        if (lower.contains("hello") || lower.contains("hi") || lower.contains("hey") || lower.contains("help") || lower.length() < 5) {
+        // 13. Greeting / General Queries
+        if (lower.contains("hello") || lower.contains("hi") || lower.contains("hey") || lower.length() < 5) {
             return "👋 **Hello! I am your NagarSeva Civic AI Assistant.**\n\n" +
                     "I can assist you with:\n" +
                     "- 📝 **Drafting complaints** (potholes, garbage, unlit streetlights, drainage)\n" +
@@ -475,12 +510,12 @@ public class GeminiService {
                     "What issue would you like assistance with today?";
         }
 
-        // 10. Default Smart Civic Response
-        return "🏛️ **NagarSeva Civic Intelligence Assistance**\n\n" +
-                "Regarding your inquiry about *\"" + query + "\"*:\n\n" +
-                "- To register this grievance with the municipality, please visit the **[Report Issue](/report)** page.\n" +
-                "- To check existing complaints or ward performance, see our **[Public Dashboard](/dashboard)**.\n" +
-                "- For immediate night safety routing, explore our **[Safety Map](/safety)**.\n\n" +
-                "Need help drafting a specific complaint? Just ask me *'Help me draft a pothole complaint'* or *'Streetlight broken'*.";
+        // 14. Default Smart Conversational Response
+        return "🏛️ **NagarSeva Civic Assistant**\n\n" +
+                "I can help you with anything related to civic grievances, municipal departments, or safety routing across your city.\n\n" +
+                "- To report an issue with photo evidence, head over to the **[Report Issue](/report)** page.\n" +
+                "- To inspect ward metrics or open grievances, check the **[Public Dashboard](/dashboard)**.\n" +
+                "- To calculate safer road navigation paths, use the **[Safety Map](/safety)**.\n\n" +
+                "Feel free to ask me to draft a complaint, explain how image verification works, or check resolution timelines!";
     }
 }
