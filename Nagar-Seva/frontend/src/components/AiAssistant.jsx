@@ -51,7 +51,7 @@ export default function AiAssistant() {
       const response = await apiClient.post('/api/ai/chat', {
         message: query,
         history: historyPayload
-      });
+      }, { timeout: 45000 });
 
       const replyText = response.data?.reply || "I'm here to help. Could you please rephrase that?";
       setMessages(prev => [...prev, { role: 'assistant', content: replyText }]);
