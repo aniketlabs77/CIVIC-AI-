@@ -47,10 +47,11 @@ public class SecurityConfig {
                 .requestMatchers(antMatcher("/api/safety/**")).permitAll()
                 .requestMatchers(antMatcher(HttpMethod.GET, "/api/complaints")).permitAll()
                 .requestMatchers(antMatcher(HttpMethod.GET, "/api/complaints/{id:[0-9]+}")).permitAll()
-                // Actuator & H2 console & AI assistant
+                // Actuator & H2 console & AI assistant & Notifications
                 .requestMatchers(antMatcher("/actuator/**")).permitAll()
                 .requestMatchers(antMatcher("/h2-console/**")).permitAll()
                 .requestMatchers(antMatcher("/api/ai/**")).permitAll()
+                .requestMatchers(antMatcher(HttpMethod.GET, "/api/notifications/**")).permitAll()
                 // Admin endpoints - require ROLE_ADMIN
                 .requestMatchers(antMatcher("/api/admin/**")).hasRole("ADMIN")
                 // Citizen complaint actions & my complaints - require authentication

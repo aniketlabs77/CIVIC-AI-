@@ -92,6 +92,12 @@ public class Complaint {
     @Column(columnDefinition = "TEXT")
     private String resolutionVerificationNote;
 
+    @Column
+    private LocalDateTime lastReminderSentAt;
+
+    @Column
+    private Integer reminderCount = 0;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "citizen_id")
     private User citizen;
@@ -301,6 +307,22 @@ public class Complaint {
 
     public void setResolutionVerificationNote(String resolutionVerificationNote) {
         this.resolutionVerificationNote = resolutionVerificationNote;
+    }
+
+    public LocalDateTime getLastReminderSentAt() {
+        return lastReminderSentAt;
+    }
+
+    public void setLastReminderSentAt(LocalDateTime lastReminderSentAt) {
+        this.lastReminderSentAt = lastReminderSentAt;
+    }
+
+    public Integer getReminderCount() {
+        return reminderCount != null ? reminderCount : 0;
+    }
+
+    public void setReminderCount(Integer reminderCount) {
+        this.reminderCount = reminderCount;
     }
 
     @Override

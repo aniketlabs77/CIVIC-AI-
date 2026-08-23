@@ -48,6 +48,9 @@ public class ComplaintService implements CommandLineRunner {
     @Autowired
     private GeminiService geminiService;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @Value("${app.escalation.threshold-minutes:5}")
     private int escalationThresholdMinutes;
 
@@ -96,7 +99,14 @@ public class ComplaintService implements CommandLineRunner {
         log.info("Complaint created: ID={}, authority={}, priority={}, imageVerified={}",
                 complaint.getId(), aiResult.routedAuthority(), aiResult.priority(), aiResult.imageVerified());
 
-        return complaintRepository.save(complaint);
+        Complaint saved = complaintRepository.save(complaint);
+        try {
+            notificationService.sendNewComplaintEmail(saved);
+        } catch (Exception e) {
+            log.warn("Failed to send new complaint email: {}", e.getMessage());
+        }
+
+        return saved;
     }
 
     /**
@@ -177,7 +187,15 @@ public class ComplaintService implements CommandLineRunner {
             if (complaintDetails.getResolutionNote() != null) {
                 complaint.setResolutionNote(complaintDetails.getResolutionNote());
             }
-            return Optional.of(complaintRepository.save(complaint));
+            Complaint saved = complaintRepository.save(complaint);
+            if (saved.getStatus() == ComplaintStatus.RESOLVED) {
+                try {
+                    notificationService.sendResolutionEmail(saved);
+                } catch (Exception e) {
+                    log.warn("Failed to send resolution email: {}", e.getMessage());
+                }
+            }
+            return Optional.of(saved);
         }
         return Optional.empty();
     }
@@ -195,7 +213,15 @@ public class ComplaintService implements CommandLineRunner {
                 if (newStatus == ComplaintStatus.RESOLVED && complaint.getResolvedAt() == null) {
                     complaint.setResolvedAt(LocalDateTime.now());
                 }
-                return Optional.of(complaintRepository.save(complaint));
+                Complaint saved = complaintRepository.save(complaint);
+                if (newStatus == ComplaintStatus.RESOLVED) {
+                    try {
+                        notificationService.sendResolutionEmail(saved);
+                    } catch (Exception e) {
+                        log.warn("Failed to send resolution email: {}", e.getMessage());
+                    }
+                }
+                return Optional.of(saved);
             } catch (IllegalArgumentException e) {
                 return Optional.empty();
             }
@@ -496,32 +522,52 @@ public class ComplaintService implements CommandLineRunner {
     }
 
     /**
-     * Scheduled job: Auto-escalate OPEN complaints older than threshold.
-     * Runs every 60 seconds. Threshold is 5 minutes for demo (represents X days in production).
+     * Scheduled job: Auto-escalate OPEN complaints and dispatch recurring reminders until resolved.
+     * Runs every 60 seconds.
      */
     @Scheduled(fixedRate = 60000) // 60 seconds
     @Transactional
     public void autoEscalateOpenComplaints() {
         try {
-            LocalDateTime threshold = LocalDateTime.now().minusMinutes(escalationThresholdMinutes);
-            List<Complaint> staleComplaints = complaintRepository.findAll().stream()
-                    .filter(c -> c.getStatus() == ComplaintStatus.OPEN)
-                    .filter(c -> !c.getEscalated())
-                    .filter(c -> c.getCreatedAt().isBefore(threshold))
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime escalationThreshold = now.minusMinutes(escalationThresholdMinutes);
+            List<Complaint> allUnresolved = complaintRepository.findAll().stream()
+                    .filter(c -> c.getStatus() == ComplaintStatus.OPEN || c.getStatus() == ComplaintStatus.IN_PROGRESS)
                     .toList();
 
-            for (Complaint complaint : staleComplaints) {
-                complaint.setEscalated(true);
+            for (Complaint complaint : allUnresolved) {
+                long minutesUnresolved = Duration.between(complaint.getCreatedAt(), now).toMinutes();
+
+                // 1. Auto-escalate OPEN complaints past the SLA threshold
+                if (complaint.getStatus() == ComplaintStatus.OPEN && !Boolean.TRUE.equals(complaint.getEscalated()) && complaint.getCreatedAt().isBefore(escalationThreshold)) {
+                    complaint.setEscalated(true);
+                    log.warn("Auto-escalated complaint ID {} (OPEN for > {} minutes). Authority: {}",
+                            complaint.getId(), escalationThresholdMinutes, complaint.getRoutedAuthority());
+                }
+
+                // 2. Periodic reminder to both citizen and authority every 2 minutes while unresolved
+                LocalDateTime lastReminder = complaint.getLastReminderSentAt();
+                boolean shouldSendReminder = (lastReminder == null && minutesUnresolved >= 1)
+                        || (lastReminder != null && Duration.between(lastReminder, now).toMinutes() >= 2);
+
+                if (shouldSendReminder) {
+                    try {
+                        notificationService.sendUnresolvedReminderEmail(complaint, Math.max(1, minutesUnresolved));
+                        complaint.setLastReminderSentAt(now);
+                        complaint.setReminderCount(complaint.getReminderCount() + 1);
+                    } catch (Exception e) {
+                        log.warn("Failed to dispatch unresolved reminder for ticket #{}: {}", complaint.getId(), e.getMessage());
+                    }
+                }
+
                 complaintRepository.save(complaint);
-                log.warn("Auto-escalated complaint ID {} (OPEN for > {} minutes). Authority: {}",
-                        complaint.getId(), escalationThresholdMinutes, complaint.getRoutedAuthority());
             }
 
-            if (!staleComplaints.isEmpty()) {
-                log.info("Auto-escalation job processed {} complaints", staleComplaints.size());
+            if (!allUnresolved.isEmpty()) {
+                log.info("Auto-monitor evaluated {} active unresolved complaints", allUnresolved.size());
             }
         } catch (Exception e) {
-            log.error("Auto-escalation job failed: {}", e.getMessage());
+            log.error("Auto-escalation and reminder job failed: {}", e.getMessage());
         }
     }
 
