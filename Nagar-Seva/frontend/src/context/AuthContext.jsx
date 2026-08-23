@@ -6,7 +6,14 @@ import apiClient from '../api/apiClient';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('nagarseva_demo_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(true);
 
   const fetchUserProfile = async (fbUser) => {
@@ -16,7 +23,6 @@ export function AuthProvider({ children }) {
     }
 
     try {
-      // Fetch user profile from backend (backend automatically syncs Firebase user)
       const response = await apiClient.get('/api/auth/me');
       const profile = response.data;
       const combinedUser = {
@@ -31,7 +37,6 @@ export function AuthProvider({ children }) {
       return combinedUser;
     } catch (err) {
       console.warn('Failed to fetch user profile from backend:', err);
-      // Fallback with default CITIZEN role if backend endpoint fails
       const fallbackUser = {
         ...fbUser,
         role: 'CITIZEN',
@@ -44,12 +49,28 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const loginLocalDemo = (role, emailInput, nameInput) => {
+    const demoUser = {
+      uid: 'demo-' + (role === 'ADMIN' ? 'admin' : 'citizen') + '-' + Date.now(),
+      email: emailInput || (role === 'ADMIN' ? 'admin@nagarseva.com' : 'citizen@nagarseva.com'),
+      displayName: nameInput || (role === 'ADMIN' ? 'Municipal Admin Officer' : 'Citizen User'),
+      role: role || 'CITIZEN',
+      id: role === 'ADMIN' ? 1 : 2,
+    };
+    try {
+      localStorage.setItem('nagarseva_demo_user', JSON.stringify(demoUser));
+    } catch (e) {
+      console.warn('LocalStorage save error:', e);
+    }
+    setUser(demoUser);
+    return demoUser;
+  };
+
   useEffect(() => {
     let isMounted = true;
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       if (!isMounted) return;
       if (fbUser) {
-        // Set initial user synchronously so UI renders immediately
         const initialUser = {
           ...fbUser,
           role: 'CITIZEN',
@@ -59,10 +80,12 @@ export function AuthProvider({ children }) {
         };
         setUser(initialUser);
         setLoading(false);
-        // Then enrich with backend role asynchronously
         fetchUserProfile(fbUser);
       } else {
-        setUser(null);
+        const localUser = localStorage.getItem('nagarseva_demo_user');
+        if (!localUser) {
+          setUser(null);
+        }
         setLoading(false);
       }
     });
@@ -91,15 +114,17 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      localStorage.removeItem('nagarseva_demo_user');
+      await signOut(auth).catch(() => {});
       setUser(null);
     } catch (err) {
       console.error('Logout error:', err);
+      setUser(null);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, logout, fetchUserProfile, syncUserProfile, auth }}>
+    <AuthContext.Provider value={{ user, loading, logout, fetchUserProfile, syncUserProfile, loginLocalDemo, auth }}>
       {children}
     </AuthContext.Provider>
   );

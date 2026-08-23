@@ -11,7 +11,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { fetchUserProfile } = useAuth();
+  const { fetchUserProfile, loginLocalDemo } = useAuth();
 
   const handleRoleChange = (role) => {
     setSelectedRole(role);
@@ -45,6 +45,19 @@ export default function Login() {
         navigate('/my-complaints');
       }
     } catch (err) {
+      console.warn('Firebase login notice:', err);
+
+      // Graceful fallback for local development if Firebase API key is not configured
+      if (err.code === 'auth/api-key-not-valid' || err.code === 'auth/invalid-api-key' || err.message?.includes('api-key-not-valid')) {
+        loginLocalDemo(selectedRole, email.trim(), selectedRole === 'ADMIN' ? 'Admin Officer' : 'Citizen User');
+        if (selectedRole === 'ADMIN') {
+          navigate('/admin');
+        } else {
+          navigate('/my-complaints');
+        }
+        return;
+      }
+
       let msg = 'Login failed. Please check your credentials.';
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         msg = 'Invalid email or password. If you do not have an account yet, please register below.';
@@ -173,7 +186,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-full bg-dark hover:bg-dark-hover text-white text-xs sm:text-sm font-bold shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 rounded-full bg-dark hover:bg-dark-hover text-white text-xs sm:text-sm font-bold shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {loading ? (
                   <>
