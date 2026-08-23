@@ -58,10 +58,12 @@ public class ComplaintService implements CommandLineRunner {
     }
 
     /**
-     * Get all complaints
+     * Get all complaints (newest first)
      */
     public List<Complaint> getAllComplaints() {
-        return complaintRepository.findAll();
+        return complaintRepository.findAll().stream()
+                .sorted((a, b) -> Long.compare(b.getId() != null ? b.getId() : 0, a.getId() != null ? a.getId() : 0))
+                .toList();
     }
 
     /**

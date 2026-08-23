@@ -98,8 +98,9 @@ public class Complaint {
     @Column
     private Integer reminderCount = 0;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "citizen_id")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "complaints"})
     private User citizen;
 
     public Complaint() {

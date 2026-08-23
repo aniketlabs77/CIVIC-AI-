@@ -50,12 +50,13 @@ export function AuthProvider({ children }) {
   };
 
   const loginLocalDemo = (role, emailInput, nameInput) => {
+    const isRoleAdmin = role === 'ADMIN';
     const demoUser = {
-      uid: 'demo-' + (role === 'ADMIN' ? 'admin' : 'citizen') + '-' + Date.now(),
-      email: emailInput || (role === 'ADMIN' ? 'admin@nagarseva.com' : 'citizen@nagarseva.com'),
-      displayName: nameInput || (role === 'ADMIN' ? 'Municipal Admin Officer' : 'Citizen User'),
-      role: role || 'CITIZEN',
-      id: role === 'ADMIN' ? 1 : 2,
+      uid: isRoleAdmin ? 'demo-admin-1' : 'demo-citizen-1',
+      email: emailInput || (isRoleAdmin ? 'admin@nagarseva.com' : 'citizen@nagarseva.com'),
+      displayName: nameInput || (isRoleAdmin ? 'Municipal Admin Officer' : 'Citizen User'),
+      role: isRoleAdmin ? 'ADMIN' : 'CITIZEN',
+      id: isRoleAdmin ? 1 : 2,
     };
     try {
       localStorage.setItem('nagarseva_demo_user', JSON.stringify(demoUser));

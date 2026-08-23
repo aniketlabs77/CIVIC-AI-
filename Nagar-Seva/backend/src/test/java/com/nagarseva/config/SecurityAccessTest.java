@@ -26,9 +26,9 @@ public class SecurityAccessTest {
     }
 
     @Test
-    public void unauthenticatedMyComplaints_shouldReturnUnauthorized() throws Exception {
+    public void unauthenticatedMyComplaints_shouldAllowGuestComplaints() throws Exception {
         mockMvc.perform(get("/api/complaints/my"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isOk());
     }
 
     @Test
