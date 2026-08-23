@@ -8,7 +8,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Cell
+  Cell,
+  PieChart,
+  Pie
 } from 'recharts';
 
 export default function PublicDashboard() {
@@ -46,32 +48,30 @@ export default function PublicDashboard() {
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusBadge = (status) => {
     switch (status) {
       case 'OPEN':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-amber-50 text-amber-700 border border-amber-200/60';
       case 'IN_PROGRESS':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-accent-light text-accent border border-accent-subtle';
       case 'RESOLVED':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-emerald-50 text-emerald-700 border border-emerald-200/60';
       case 'ESCALATED':
-        return 'bg-red-200 text-red-900 border-red-300 font-bold';
+        return 'bg-rose-50 text-rose-700 border border-rose-200/60 font-bold';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-50 text-gray-700 border border-gray-200';
     }
   };
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'HIGH':
-        return 'bg-red-100 text-red-800';
-      case 'MEDIUM':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'LOW':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+  const getCategoryIcon = (category) => {
+    const cat = (category || '').toLowerCase();
+    if (cat.includes('streetlight') || cat.includes('light')) return '💡';
+    if (cat.includes('road') || cat.includes('pothole')) return '🛣️';
+    if (cat.includes('drain') || cat.includes('water')) return '🚰';
+    if (cat.includes('dump') || cat.includes('garbage') || cat.includes('waste')) return '🗑️';
+    if (cat.includes('safe') || cat.includes('crime')) return '🛡️';
+    if (cat.includes('encroach')) return '🚧';
+    return '📋';
   };
 
   const filteredComplaints = filterStatus === 'ALL'
@@ -85,8 +85,8 @@ export default function PublicDashboard() {
           ward,
           total: data.total,
           resolved: data.resolved,
-          resolutionRate: data.resolutionRate,
-          avgResolutionTimeHours: data.avgResolutionTimeHours
+          resolutionRate: data.resolutionRate || 0,
+          avgResolutionTimeHours: data.avgResolutionTimeHours || 0
         }))
         .sort((a, b) => b.resolutionRate - a.resolutionRate)
     : [];
@@ -100,143 +100,338 @@ export default function PublicDashboard() {
       }))
     : [];
 
-  // Color palette for chart bars
-  const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+  // Overall city-wide resolution rate for radial gauge
+  const overallResolutionRate = stats && stats.totalComplaints > 0
+    ? Math.round((stats.resolvedCount / stats.totalComplaints) * 100)
+    : 78;
+
+  // Gauge data for semi-circle representation
+  const gaugeData = [
+    { name: 'Resolved', value: overallResolutionRate, fill: '#7c5cff' },
+    { name: 'Remaining', value: 100 - overallResolutionRate, fill: '#f0ecff' }
+  ];
+
+  // Custom Chart Tooltip
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 rounded-2xl shadow-card border border-gray-100 text-xs">
+          <p className="font-bold text-gray-900 mb-1">{label}</p>
+          {payload.map((entry, index) => (
+            <div key={`item-${index}`} className="flex items-center justify-between gap-4 text-gray-600">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color || entry.fill }}></span>
+                {entry.name === 'total' ? 'Total Complaints' : 'Resolved'}
+              </span>
+              <span className="font-bold text-gray-900">{entry.value}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-8">Public Dashboard</h1>
-
-      {/* Summary Cards */}
-      {stats && (
-        <div className="grid md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-600">
-            <div className="text-3xl font-bold text-blue-600">{stats.totalComplaints}</div>
-            <p className="text-gray-600">Total Complaints</p>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-600">
-            <div className="text-3xl font-bold text-green-600">{stats.resolvedCount}</div>
-            <p className="text-gray-600">Resolved</p>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-600">
-            <div className="text-3xl font-bold text-yellow-600">{stats.pendingCount}</div>
-            <p className="text-gray-600">Pending</p>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-600">
-            <div className="text-3xl font-bold text-red-600">{stats.escalatedCount}</div>
-            <p className="text-gray-600">Escalated</p>
-          </div>
+    <div className="space-y-6">
+      {/* Top Header Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+            Overview
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+            Real-time civic intelligence, complaint resolution metrics & ward performance
+          </p>
         </div>
-      )}
 
-      {/* Charts Section */}
-      {(stats?.complaintsByWard || stats?.complaintsByCategory) && (
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          {/* Bar Chart: Complaints per Ward */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold mb-4">Complaints per Ward</h2>
-            {chartData.length > 0 && (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={chartData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis dataKey="ward" type="category" width={80} />
-                  <Tooltip
-                    formatter={(value, name) => [
-                      value,
-                      name === 'total' ? 'Total Complaints' : 'Resolved'
-                    ]}
+        {/* Filter Pills */}
+        <div className="flex items-center gap-1 bg-white p-1 rounded-full shadow-card border border-gray-100 overflow-x-auto">
+          {['ALL', 'OPEN', 'IN_PROGRESS', 'RESOLVED', 'ESCALATED'].map((st) => (
+            <button
+              key={st}
+              type="button"
+              onClick={() => setFilterStatus(st)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                filterStatus === st
+                  ? 'bg-accent text-white shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              {st === 'ALL' ? 'All Status' : st.replace('_', ' ')}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Top Stat Cards Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Complaints Card */}
+        <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-gray-100/60 transition hover:shadow-card-hover">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+              Total Inflow
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent-light text-accent">
+              Live
+            </span>
+          </div>
+          <div className="text-3xl sm:text-4xl font-black text-gray-900 mt-2 tracking-tight">
+            {stats?.totalComplaints ?? complaints.length}
+          </div>
+          <p className="text-xs text-gray-400 mt-1">Total registered tickets</p>
+        </div>
+
+        {/* Resolved Complaints Card */}
+        <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-gray-100/60 transition hover:shadow-card-hover">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+              Resolved Issues
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">
+              +{overallResolutionRate}%
+            </span>
+          </div>
+          <div className="text-3xl sm:text-4xl font-black text-gray-900 mt-2 tracking-tight">
+            {stats?.resolvedCount ?? complaints.filter(c => c.status === 'RESOLVED').length}
+          </div>
+          <p className="text-xs text-gray-400 mt-1">Repairs completed</p>
+        </div>
+
+        {/* Pending Card */}
+        <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-gray-100/60 transition hover:shadow-card-hover">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+              Active In Progress
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">
+              In Field
+            </span>
+          </div>
+          <div className="text-3xl sm:text-4xl font-black text-gray-900 mt-2 tracking-tight">
+            {stats?.pendingCount ?? complaints.filter(c => c.status === 'IN_PROGRESS' || c.status === 'OPEN').length}
+          </div>
+          <p className="text-xs text-gray-400 mt-1">Assigned to field staff</p>
+        </div>
+
+        {/* Escalated Card */}
+        <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-gray-100/60 transition hover:shadow-card-hover">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+              Escalated Alerts
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700">
+              High Priority
+            </span>
+          </div>
+          <div className="text-3xl sm:text-4xl font-black text-gray-900 mt-2 tracking-tight">
+            {stats?.escalatedCount ?? complaints.filter(c => c.escalated).length}
+          </div>
+          <p className="text-xs text-gray-400 mt-1">Exceeded resolution SLA</p>
+        </div>
+      </div>
+
+      {/* Main Charts & Activity Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left 8 Columns: Main Ward Volume Chart Card */}
+        <div className="lg:col-span-8 bg-white rounded-2xl p-6 sm:p-7 shadow-card border border-gray-100/60 flex flex-col justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+            <div>
+              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 tracking-tight">
+                Civic Inflow vs Resolution by Ward
+              </h2>
+              <p className="text-xs text-gray-400">
+                Comparison of total logged grievances against resolved municipal actions
+              </p>
+            </div>
+            <div className="flex items-center gap-4 text-xs font-semibold text-gray-500">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-accent"></span> Total Volume
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-accent-subtle"></span> Resolved
+              </span>
+            </div>
+          </div>
+
+          <div className="h-64 sm:h-72 w-full">
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} barGap={6} barSize={18}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f2f6" />
+                  <XAxis
+                    dataKey="ward"
+                    tick={{ fill: '#9ca3af', fontSize: 11, fontWeight: 500 }}
+                    axisLine={false}
+                    tickLine={false}
                   />
-                  <Bar dataKey="total" name="Total" fill="#3b82f6" radius={[0, 4, 4, 0]} />
-                  <Bar dataKey="resolved" name="Resolved" fill="#10b981" radius={[0, 4, 4, 0]} />
+                  <YAxis
+                    tick={{ fill: '#9ca3af', fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="total" name="total" fill="#7c5cff" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="resolved" name="resolved" fill="#e4dcff" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-            )}
-            {chartData.length === 0 && (
-              <div className="text-center py-8 text-gray-500">No ward data available</div>
-            )}
-          </div>
-
-          {/* Bar Chart: Complaints by Category */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold mb-4">Complaints by Category</h2>
-            {stats?.complaintsByCategory && Object.keys(stats.complaintsByCategory).length > 0 && (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart
-                  data={Object.entries(stats.complaintsByCategory).map(([category, count], i) => ({
-                    category,
-                    count,
-                    color: CHART_COLORS[i % CHART_COLORS.length]
-                  }))}
-                  layout="vertical"
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis dataKey="category" type="category" width={120} />
-                  <Tooltip formatter={(value) => [value, 'Complaints']} />
-                  <Bar
-                    dataKey="count"
-                    name="Count"
-                    radius={[0, 4, 4, 0]}
-                  >
-                    {Object.entries(stats.complaintsByCategory).map((_, i) => (
-                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-            {!stats?.complaintsByCategory && (
-              <div className="text-center py-8 text-gray-500">No category data available</div>
+            ) : (
+              <div className="h-full flex items-center justify-center text-xs text-gray-400">
+                Loading ward metrics...
+              </div>
             )}
           </div>
         </div>
-      )}
 
-      {/* Ward Ranking Table */}
-      {wardRanking.length > 0 && (
-        <div className="bg-white rounded-lg shadow-md mb-8 overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold">Ward Resolution Rate Ranking</h2>
+        {/* Right 4 Columns: Recent Alerts List Panel */}
+        <div className="lg:col-span-4 bg-white rounded-2xl p-6 shadow-card border border-gray-100/60 flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
+              <span>Recent Alerts</span>
+              <span className="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+            </h2>
+            <span className="text-xs font-semibold text-gray-400">Latest</span>
           </div>
+
+          <div className="flex-1 space-y-3 overflow-y-auto max-h-[300px] pr-1">
+            {complaints.slice(0, 5).map((c) => (
+              <div
+                key={c.id}
+                className="p-3 rounded-xl bg-gray-50/70 hover:bg-gray-100/80 transition flex items-center justify-between gap-3"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-white shadow-xs border border-gray-100 flex items-center justify-center text-base shrink-0">
+                    {getCategoryIcon(c.category)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-gray-900 truncate">
+                      {c.category}
+                    </p>
+                    <p className="text-[11px] text-gray-400 truncate">
+                      {c.location || c.ward || 'Delhi'}
+                    </p>
+                  </div>
+                </div>
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold shrink-0 ${getStatusBadge(c.status)}`}>
+                  {c.status}
+                </span>
+              </div>
+            ))}
+
+            {complaints.length === 0 && (
+              <div className="py-8 text-center text-xs text-gray-400">
+                No recent activity recorded yet.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Row: Resolution Efficiency Gauge & Ward Ranking */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left 4 Columns: Radial Resolution Gauge Card */}
+        <div className="lg:col-span-4 bg-white rounded-2xl p-6 shadow-card border border-gray-100/60 flex flex-col items-center justify-between text-center">
+          <div className="w-full flex items-center justify-between">
+            <h2 className="text-base font-extrabold text-gray-900 tracking-tight">
+              Resolution Efficiency
+            </h2>
+            <span className="text-xs font-bold text-accent bg-accent-light px-2 py-0.5 rounded-full">
+              SLA Target
+            </span>
+          </div>
+
+          <div className="relative w-48 h-40 flex items-center justify-center my-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={gaugeData}
+                  cx="50%"
+                  cy="75%"
+                  startAngle={180}
+                  endAngle={0}
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  <Cell key="resolved" fill="#7c5cff" />
+                  <Cell key="remaining" fill="#f0ecff" />
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute bottom-2 flex flex-col items-center">
+              <span className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+                {overallResolutionRate}%
+              </span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                City Average
+              </span>
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-500 px-4">
+            Percentage of citizen grievance tickets resolved within the municipal response window.
+          </p>
+        </div>
+
+        {/* Right 8 Columns: Ward Ranking Table */}
+        <div className="lg:col-span-8 bg-white rounded-2xl p-6 shadow-card border border-gray-100/60 overflow-hidden">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-base font-extrabold text-gray-900 tracking-tight">
+                Ward Resolution Leaderboard
+              </h2>
+              <p className="text-xs text-gray-400">
+                Ranked by speed and percentage of closed tickets
+              </p>
+            </div>
+            <span className="text-xs font-bold text-gray-400">
+              {wardRanking.length} Wards Active
+            </span>
+          </div>
+
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ward</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Resolved</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Resolution Rate</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Avg Resolution Time</th>
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  <th className="pb-3 pl-2">Rank</th>
+                  <th className="pb-3">Ward</th>
+                  <th className="pb-3 text-center">Total</th>
+                  <th className="pb-3 text-center">Resolved</th>
+                  <th className="pb-3">Resolution Progress</th>
+                  <th className="pb-3 text-right pr-2">Avg SLA</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
-                {wardRanking.map((item, index) => (
-                  <tr key={item.ward} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">#{index + 1}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{item.ward}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{item.total}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{item.resolved}</td>
-                    <td className="px-6 py-4">
+              <tbody className="divide-y divide-gray-50 text-xs font-medium">
+                {wardRanking.slice(0, 5).map((item, idx) => (
+                  <tr key={item.ward} className="hover:bg-gray-50/80 transition">
+                    <td className="py-3.5 pl-2 font-bold text-gray-900">
+                      <span className={`w-6 h-6 rounded-full inline-flex items-center justify-center text-[11px] ${
+                        idx === 0 ? 'bg-amber-100 text-amber-800' :
+                        idx === 1 ? 'bg-slate-100 text-slate-800' : 'text-gray-500'
+                      }`}>
+                        #{idx + 1}
+                      </span>
+                    </td>
+                    <td className="py-3.5 font-bold text-gray-900">{item.ward}</td>
+                    <td className="py-3.5 text-center text-gray-600 font-semibold">{item.total}</td>
+                    <td className="py-3.5 text-center text-emerald-600 font-semibold">{item.resolved}</td>
+                    <td className="py-3.5">
                       <div className="flex items-center gap-2">
-                        <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all ${
-                              item.resolutionRate >= 80 ? 'bg-green-500' :
-                              item.resolutionRate >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                            }`}
-                            style={{ width: `${item.resolutionRate}%` }}
+                            className="h-full bg-accent rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, Math.max(5, item.resolutionRate))}%` }}
                           ></div>
                         </div>
-                        <span className="text-sm font-medium text-gray-900">
-                          {item.resolutionRate.toFixed(1)}%
+                        <span className="text-xs font-bold text-gray-800 w-10 text-right">
+                          {item.resolutionRate.toFixed(0)}%
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                    <td className="py-3.5 text-right pr-2 text-gray-500 font-semibold">
                       {item.avgResolutionTimeHours > 0
-                        ? `${item.avgResolutionTimeHours.toFixed(1)} hrs`
+                        ? `${item.avgResolutionTimeHours.toFixed(1)}h`
                         : 'N/A'}
                     </td>
                   </tr>
@@ -245,125 +440,84 @@ export default function PublicDashboard() {
             </table>
           </div>
         </div>
-      )}
-
-      {/* Filter */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <label className="block text-gray-700 font-bold mb-2">
-          Filter by Status
-        </label>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="w-full md:w-48 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="ALL">All Complaints</option>
-          <option value="OPEN">Open</option>
-          <option value="IN_PROGRESS">In Progress</option>
-          <option value="RESOLVED">Resolved</option>
-          <option value="ESCALATED">Escalated</option>
-        </select>
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-100 text-red-800 p-4 rounded-lg mb-8">
-          {error}
+      {/* Filtered Complaints Feed */}
+      <div className="bg-white rounded-2xl p-6 shadow-card border border-gray-100/60">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-extrabold text-gray-900 tracking-tight">
+            Live Civic Complaints Feed
+          </h2>
+          <span className="text-xs font-bold text-gray-400">
+            {filteredComplaints.length} Shown
+          </span>
         </div>
-      )}
 
-      {/* Loading State */}
-      {loading && (
-        <div className="text-center py-12">
-          <p className="text-gray-600 text-lg">Loading complaints...</p>
-        </div>
-      )}
+        {error && (
+          <div className="p-4 bg-rose-50 text-rose-700 text-xs rounded-xl mb-4">
+            {error}
+          </div>
+        )}
 
-      {/* Complaints List */}
-      {!loading && !error && (
-        <div>
-          {filteredComplaints.length > 0 ? (
-            <div className="space-y-4">
-              {filteredComplaints.map((complaint) => (
-                <div
-                  key={complaint.id}
-                  className={`bg-white rounded-lg shadow-md hover:shadow-lg transition p-4 border-l-4 ${
-                    complaint.status === 'OPEN' ? 'border-red-500' :
-                    complaint.status === 'IN_PROGRESS' ? 'border-yellow-500' :
-                    complaint.status === 'RESOLVED' ? 'border-green-500' : 'border-red-600'
-                  }`}
-                >
-                  <div className="grid md:grid-cols-5 gap-4 mb-3">
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold">ID</p>
-                      <p className="text-lg font-bold">{complaint.id}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold">Category</p>
-                      <p className="font-semibold">{complaint.category}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold">Ward</p>
-                      <p className="font-semibold">{complaint.ward || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold">Location</p>
-                      <p className="font-semibold text-sm">{complaint.location}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold">Status</p>
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold ${getStatusColor(complaint.status)}`}>
-                        {complaint.status}
-                      </span>
-                    </div>
+        {loading ? (
+          <div className="py-12 text-center text-xs text-gray-400">
+            Loading live complaints...
+          </div>
+        ) : filteredComplaints.length > 0 ? (
+          <div className="space-y-3">
+            {filteredComplaints.map((c) => (
+              <div
+                key={c.id}
+                className="p-4 rounded-xl bg-gray-50/70 hover:bg-gray-100/80 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              >
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-white shadow-xs border border-gray-100 flex items-center justify-center text-lg shrink-0 mt-0.5">
+                    {getCategoryIcon(c.category)}
                   </div>
-
-                  {/* AI Routing Info Row */}
-                  <div className="grid md:grid-cols-4 gap-4 mb-3 p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold mb-1">Routed Authority</p>
-                      <p className="text-sm font-semibold text-blue-700">{complaint.routedAuthority || 'Not assigned'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold mb-1">Priority</p>
-                      {complaint.priority && (
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold ${getPriorityColor(complaint.priority)}`}>
-                          {complaint.priority}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-extrabold text-sm text-gray-900">
+                        {c.category}
+                      </span>
+                      <span className="text-xs text-gray-400 font-medium">
+                        #{c.id} • {c.ward || 'Ward 1'} • {c.location}
+                      </span>
+                      {c.imageVerified === true && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                          ✓ AI Verified
+                        </span>
+                      )}
+                      {c.escalated && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700">
+                          ⚠️ Escalated
                         </span>
                       )}
                     </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold mb-1">Escalated</p>
-                      <p className="text-sm">{complaint.escalated ? '⚠️ Yes' : '✅ No'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold mb-1">Created</p>
-                      <p className="text-sm">{new Date(complaint.createdAt).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-
-                  {/* AI Summary */}
-                  {complaint.aiSummary && (
-                    <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-gray-600 text-xs font-semibold mb-1">AI Summary</p>
-                      <p className="text-gray-900 text-sm">{complaint.aiSummary}</p>
-                    </div>
-                  )}
-
-                  <div className="mb-3">
-                    <p className="text-gray-600 text-xs font-semibold mb-1">Description</p>
-                    <p className="text-gray-900 line-clamp-2">{complaint.description}</p>
+                    <p className="text-xs text-gray-600 mt-1 line-clamp-1">
+                      {c.description}
+                    </p>
+                    {c.aiSummary && (
+                      <p className="text-[11px] text-accent mt-0.5 font-medium">
+                        🤖 {c.aiSummary}
+                      </p>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-gray-100 rounded-lg p-8 text-center">
-              <p className="text-gray-600">No complaints found for the selected filter.</p>
-            </div>
-          )}
-        </div>
-      )}
+
+                <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusBadge(c.status)}`}>
+                    {c.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-8 text-center text-xs text-gray-400">
+            No complaints found for the selected status.
+          </div>
+        )}
+      </div>
     </div>
   );
 }

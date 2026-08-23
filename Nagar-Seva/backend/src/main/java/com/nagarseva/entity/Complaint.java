@@ -80,6 +80,18 @@ public class Complaint {
     @Column(columnDefinition = "TEXT")
     private String resolutionNote;
 
+    @Column
+    private Boolean imageVerified;
+
+    @Column(columnDefinition = "TEXT")
+    private String imageVerificationNote;
+
+    @Column
+    private Boolean resolutionVerified;
+
+    @Column(columnDefinition = "TEXT")
+    private String resolutionVerificationNote;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "citizen_id")
     private User citizen;
@@ -257,6 +269,38 @@ public class Complaint {
 
     public void setCitizen(User citizen) {
         this.citizen = citizen;
+    }
+
+    public Boolean getImageVerified() {
+        return imageVerified;
+    }
+
+    public void setImageVerified(Boolean imageVerified) {
+        this.imageVerified = imageVerified;
+    }
+
+    public String getImageVerificationNote() {
+        return imageVerificationNote;
+    }
+
+    public void setImageVerificationNote(String imageVerificationNote) {
+        this.imageVerificationNote = imageVerificationNote;
+    }
+
+    public Boolean getResolutionVerified() {
+        return resolutionVerified;
+    }
+
+    public void setResolutionVerified(Boolean resolutionVerified) {
+        this.resolutionVerified = resolutionVerified;
+    }
+
+    public String getResolutionVerificationNote() {
+        return resolutionVerificationNote;
+    }
+
+    public void setResolutionVerificationNote(String resolutionVerificationNote) {
+        this.resolutionVerificationNote = resolutionVerificationNote;
     }
 
     @Override

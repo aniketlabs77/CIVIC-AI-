@@ -1,13 +1,34 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import apiClient from '../api/apiClient';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebase';
+import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
+  const [selectedRole, setSelectedRole] = useState('CITIZEN'); // 'CITIZEN' | 'ADMIN'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { fetchUserProfile } = useAuth();
+
+  const handleRoleChange = (role) => {
+    setSelectedRole(role);
+    setError('');
+  };
+
+  const handleFillDemo = (role) => {
+    setSelectedRole(role);
+    setError('');
+    if (role === 'ADMIN') {
+      setEmail('admin@nagarseva.com');
+      setPassword('admin123');
+    } else {
+      setEmail('citizen@nagarseva.com');
+      setPassword('citizen123');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,52 +36,109 @@ export default function Login() {
     setError('');
 
     try {
-      const response = await apiClient.post('/api/auth/login', { email, password });
-      const user = response.data;
-      
-      // Store user in localStorage
-      localStorage.setItem('user', JSON.stringify(user));
-      
-      // Redirect based on role
-      if (user.role === 'ADMIN') {
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      const userProfile = await fetchUserProfile(userCredential.user);
+
+      if (userProfile && userProfile.role === 'ADMIN') {
         navigate('/admin');
       } else {
         navigate('/my-complaints');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed. Please try again.');
+      let msg = 'Login failed. Please check your credentials.';
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        msg = 'Invalid email or password. If you do not have an account yet, please register below.';
+      } else if (err.code === 'auth/too-many-requests') {
+        msg = 'Too many failed attempts. Please try again later.';
+      } else if (err.message) {
+        msg = err.message;
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGuestAccess = (page) => {
-    navigate(page);
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Sign in to NagarSeva</h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Or{' '}
-          <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
-            create a new account
-          </Link>
-        </p>
-      </div>
+    <div className="min-h-[78vh] flex flex-col justify-center items-center py-6 px-4">
+      <div className="w-full max-w-md">
+        {/* Branding header */}
+        <div className="text-center mb-6">
+          <div className="w-12 h-12 rounded-2xl bg-accent flex items-center justify-center text-white text-xl font-black shadow-md mx-auto mb-3">
+            🏛️
+          </div>
+          <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+            Sign In to NagarSeva
+          </h2>
+          <p className="mt-1 text-xs text-gray-500">
+            Don't have an account?{' '}
+            <Link to="/register" className="font-bold text-accent hover:underline">
+              Create an account
+            </Link>
+          </p>
+        </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        {/* Card Container */}
+        <div className="bg-white rounded-3xl p-7 sm:p-9 shadow-card border border-gray-100/80">
+          {/* Role Pill Switcher */}
+          <div className="mb-5">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2 text-center">
+              Select Sign In Portal
+            </label>
+            <div className="grid grid-cols-2 gap-1.5 p-1 bg-gray-100 rounded-full">
+              <button
+                type="button"
+                onClick={() => handleRoleChange('CITIZEN')}
+                className={`py-2 px-3 rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                  selectedRole === 'CITIZEN'
+                    ? 'bg-white text-gray-900 shadow-xs'
+                    : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                <span>👤</span> Citizen
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRoleChange('ADMIN')}
+                className={`py-2 px-3 rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                  selectedRole === 'ADMIN'
+                    ? 'bg-white text-gray-900 shadow-xs'
+                    : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                <span>🛡️</span> Municipal Admin
+              </button>
+            </div>
+          </div>
+
+          {/* Role Context Indicator Banner */}
+          <div className={`mb-5 p-3 rounded-2xl border text-xs font-medium ${
+            selectedRole === 'ADMIN'
+              ? 'bg-accent-light/50 border-accent-subtle text-accent'
+              : 'bg-gray-50 border-gray-200 text-gray-700'
+          }`}>
+            <p className="font-bold mb-0.5">
+              {selectedRole === 'ADMIN' ? '🛡️ Municipal Authority Access' : '👤 Citizen Grievance Portal'}
+            </p>
+            <p className="text-[11px] text-gray-500">
+              {selectedRole === 'ADMIN'
+                ? 'Authorized access to resolve tickets, review vision photo proofs, and monitor ward metrics.'
+                : 'Report civic issues, track ticket progress, and verify municipal action.'}
+            </p>
+          </div>
+
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
+            <div className="mb-5 p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-xs flex items-start gap-2">
+              <span className="text-sm">⚠️</span>
+              <span>{error}</span>
             </div>
           )}
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="email" className="sr-only">Email address</label>
+              <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                Email Address
+              </label>
               <input
                 id="email"
                 name="email"
@@ -69,13 +147,15 @@ export default function Login() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
+                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                placeholder={selectedRole === 'ADMIN' ? 'admin@nagarseva.com' : 'citizen@nagarseva.com'}
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="sr-only">Password</label>
+              <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                Password
+              </label>
               <input
                 id="password"
                 name="password"
@@ -84,44 +164,48 @@ export default function Login() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
+                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                placeholder="••••••••"
               />
             </div>
 
-            <div>
+            <div className="pt-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                className="w-full py-3 px-4 rounded-full bg-dark hover:bg-dark-hover text-white text-xs sm:text-sm font-bold shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading ? 'Signing in...' : 'Sign in'}
+                {loading ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Signing in...</span>
+                  </>
+                ) : (
+                  <span>Sign In as {selectedRole === 'ADMIN' ? 'Admin' : 'Citizen'}</span>
+                )}
               </button>
             </div>
           </form>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue as guest</span>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-2 gap-4">
+          {/* 1-Click Demo Fill */}
+          <div className="mt-6 pt-5 border-t border-gray-100 text-center">
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+              1-Click Demo Login Credentials
+            </p>
+            <div className="flex justify-center gap-2">
               <button
-                onClick={() => handleGuestAccess('/dashboard')}
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                type="button"
+                onClick={() => handleFillDemo('CITIZEN')}
+                className="px-3 py-1.5 bg-gray-50 hover:bg-accent-light hover:text-accent border border-gray-200 rounded-full text-xs font-semibold text-gray-700 transition"
               >
-                View Public Dashboard
+                👤 Demo Citizen
               </button>
               <button
-                onClick={() => handleGuestAccess('/safety')}
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                type="button"
+                onClick={() => handleFillDemo('ADMIN')}
+                className="px-3 py-1.5 bg-gray-50 hover:bg-accent-light hover:text-accent border border-gray-200 rounded-full text-xs font-semibold text-gray-700 transition"
               >
-                View Safety Map
+                🛡️ Demo Admin
               </button>
             </div>
           </div>
@@ -130,4 +214,3 @@ export default function Login() {
     </div>
   );
 }
-

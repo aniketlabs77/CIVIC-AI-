@@ -8,6 +8,8 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,7 +39,12 @@ public class ComplaintController {
      * GET /api/complaints/my - Get current user's complaints
      */
     @GetMapping("/my")
-    public ResponseEntity<List<Complaint>> getMyComplaints(@RequestHeader("X-User-Id") Long userId) {
+    public ResponseEntity<List<Complaint>> getMyComplaints() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof User user)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long userId = user.getId();
         List<Complaint> allComplaints = complaintService.getAllComplaints();
         List<Complaint> myComplaints = allComplaints.stream()
                 .filter(c -> c.getCitizen() != null && c.getCitizen().getId().equals(userId))
@@ -59,16 +66,13 @@ public class ComplaintController {
      * POST /api/complaints - Create a new complaint
      */
     @PostMapping
-    public ResponseEntity<Complaint> createComplaint(
-            @Valid @RequestBody Complaint complaint,
-            @RequestHeader("X-User-Id") Long userId) {
-        
-        Optional<User> userOpt = userService.findById(userId);
-        if (userOpt.isEmpty()) {
+    public ResponseEntity<Complaint> createComplaint(@Valid @RequestBody Complaint complaint) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof User user)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         
-        complaint.setCitizen(userOpt.get());
+        complaint.setCitizen(user);
         Complaint createdComplaint = complaintService.createComplaint(complaint);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdComplaint);
     }

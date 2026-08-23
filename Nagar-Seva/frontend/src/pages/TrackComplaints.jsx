@@ -34,7 +34,6 @@ export default function TrackComplaints() {
       const response = await apiClient.patch(`/api/complaints/${complaintId}/status`, {
         status: newStatus,
       });
-      // Update complaint in list
       setComplaints(prevComplaints =>
         prevComplaints.map(c =>
           c.id === complaintId ? response.data : c
@@ -50,30 +49,30 @@ export default function TrackComplaints() {
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusBadge = (status) => {
     switch (status) {
       case 'OPEN':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-amber-50 text-amber-700 border border-amber-200/60';
       case 'IN_PROGRESS':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-accent-light text-accent border border-accent-subtle';
       case 'RESOLVED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-emerald-50 text-emerald-700 border border-emerald-200/60';
+      case 'ESCALATED':
+        return 'bg-rose-50 text-rose-700 border border-rose-200/60 font-bold';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-50 text-gray-700 border border-gray-200';
     }
   };
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'HIGH':
-        return 'bg-red-100 text-red-800';
-      case 'MEDIUM':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'LOW':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+  const getCategoryIcon = (category) => {
+    const cat = (category || '').toLowerCase();
+    if (cat.includes('streetlight') || cat.includes('light')) return '💡';
+    if (cat.includes('road') || cat.includes('pothole')) return '🛣️';
+    if (cat.includes('drain') || cat.includes('water')) return '🚰';
+    if (cat.includes('dump') || cat.includes('garbage') || cat.includes('waste')) return '🗑️';
+    if (cat.includes('safe') || cat.includes('crime')) return '🛡️';
+    if (cat.includes('encroach')) return '🚧';
+    return '📋';
   };
 
   const filteredComplaints = filterStatus === 'ALL'
@@ -88,63 +87,82 @@ export default function TrackComplaints() {
   };
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Track Complaints</h1>
+    <div className="space-y-6">
+      {/* Header Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+            Track All Complaints
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+            Real-time public grievance status & departmental routing
+          </p>
+        </div>
+
+        {/* Filter Pills */}
+        <div className="flex items-center gap-1 bg-white p-1 rounded-full shadow-card border border-gray-100 overflow-x-auto">
+          {['ALL', 'OPEN', 'IN_PROGRESS', 'RESOLVED'].map((st) => (
+            <button
+              key={st}
+              type="button"
+              onClick={() => setFilterStatus(st)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                filterStatus === st
+                  ? 'bg-accent text-white shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              {st === 'ALL' ? 'All Status' : st.replace('_', ' ')}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {message && (
-        <div className={`p-4 mb-6 rounded-lg ${message.includes('✅') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+        <div className={`p-4 rounded-2xl text-xs font-semibold shadow-xs ${
+          message.includes('✅') ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'
+        }`}>
           {message}
         </div>
       )}
 
-      {/* Statistics */}
-      <div className="grid md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="text-3xl font-bold text-blue-600">{stats.total}</div>
-          <p className="text-gray-600">Total</p>
+      {/* Top Stat Cards Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-2xl p-5 shadow-card border border-gray-100/60">
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total</span>
+          <div className="text-3xl font-black text-gray-900 mt-1">{stats.total}</div>
+          <p className="text-xs text-gray-400 mt-1">All wards</p>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="text-3xl font-bold text-yellow-600">{stats.open}</div>
-          <p className="text-gray-600">Open</p>
+
+        <div className="bg-white rounded-2xl p-5 shadow-card border border-gray-100/60">
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Open Tickets</span>
+          <div className="text-3xl font-black text-amber-600 mt-1">{stats.open}</div>
+          <p className="text-xs text-gray-400 mt-1">Awaiting dispatch</p>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="text-3xl font-bold text-blue-500">{stats.inProgress}</div>
-          <p className="text-gray-600">In Progress</p>
+
+        <div className="bg-white rounded-2xl p-5 shadow-card border border-gray-100/60">
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">In Progress</span>
+          <div className="text-3xl font-black text-accent mt-1">{stats.inProgress}</div>
+          <p className="text-xs text-gray-400 mt-1">Under inspection</p>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="text-3xl font-bold text-green-600">{stats.resolved}</div>
-          <p className="text-gray-600">Resolved</p>
+
+        <div className="bg-white rounded-2xl p-5 shadow-card border border-gray-100/60">
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Resolved</span>
+          <div className="text-3xl font-black text-emerald-600 mt-1">{stats.resolved}</div>
+          <p className="text-xs text-gray-400 mt-1">Repairs completed</p>
         </div>
       </div>
 
-      {/* Filter */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <label className="block text-gray-700 font-bold mb-2">
-          Filter by Status
-        </label>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="w-full md:w-48 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="ALL">All Complaints</option>
-          <option value="OPEN">Open</option>
-          <option value="IN_PROGRESS">In Progress</option>
-          <option value="RESOLVED">Resolved</option>
-        </select>
-      </div>
-
-      {/* Error Message */}
       {error && (
-        <div className="bg-red-100 text-red-800 p-4 rounded-lg mb-8">
+        <div className="p-4 bg-rose-50 text-rose-700 text-xs rounded-2xl border border-rose-200">
           {error}
         </div>
       )}
 
-      {/* Loading State */}
       {loading && (
-        <div className="text-center py-12">
-          <p className="text-gray-600 text-lg">Loading complaints...</p>
+        <div className="py-16 text-center text-xs text-gray-400">
+          <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+          Loading complaints feed...
         </div>
       )}
 
@@ -152,104 +170,121 @@ export default function TrackComplaints() {
       {!loading && !error && (
         <div>
           {filteredComplaints.length > 0 ? (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {filteredComplaints.map((complaint) => (
                 <div
                   key={complaint.id}
-                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition p-6 border-l-4 border-blue-600"
+                  className="bg-white rounded-2xl shadow-card border border-gray-100/70 p-5 sm:p-6 transition hover:shadow-card-hover"
                 >
-                  <div className="grid md:grid-cols-5 gap-4 mb-4">
-                    <div>
-                      <p className="text-gray-600 text-sm font-semibold">ID</p>
-                      <p className="text-xl font-bold">{complaint.id}</p>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+                    <div className="flex items-start gap-3.5 min-w-0">
+                      <div className="w-11 h-11 rounded-2xl bg-gray-50 flex items-center justify-center text-xl shadow-xs border border-gray-100 shrink-0">
+                        {getCategoryIcon(complaint.category)}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-base font-extrabold text-gray-900">
+                            {complaint.category}
+                          </span>
+                          <span className="text-xs font-bold text-gray-400">
+                            #{complaint.id} • {complaint.ward || 'Ward 1'} • {new Date(complaint.createdAt).toLocaleDateString()}
+                          </span>
+                          {complaint.imageVerified === true && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                              ✓ AI Verified
+                            </span>
+                          )}
+                          {complaint.escalated && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700">
+                              ⚠️ Escalated
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          📍 {complaint.location}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-gray-600 text-sm font-semibold">Category</p>
-                      <p className="font-semibold">{complaint.category}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-sm font-semibold">Location</p>
-                      <p className="font-semibold text-sm">{complaint.location}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-sm font-semibold">Created</p>
-                      <p className="font-semibold text-sm">
-                        {new Date(complaint.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-sm font-semibold">Status</p>
-                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${getStatusColor(complaint.status)}`}>
+
+                    <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusBadge(complaint.status)}`}>
                         {complaint.status}
                       </span>
                     </div>
                   </div>
 
-                  {/* AI Routing Info */}
-                  <div className="grid md:grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+                  {/* Summary & Description */}
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-gray-600 text-sm font-semibold mb-1">Routed Authority</p>
-                      <p className="font-semibold text-blue-700">{complaint.routedAuthority || 'Not assigned'}</p>
+                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                        Description
+                      </p>
+                      <p className="text-xs text-gray-700 leading-relaxed bg-gray-50/60 p-3 rounded-xl border border-gray-100">
+                        {complaint.description}
+                      </p>
                     </div>
+
                     <div>
-                      <p className="text-gray-600 text-sm font-semibold mb-1">Priority</p>
-                      {complaint.priority && (
-                        <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${getPriorityColor(complaint.priority)}`}>
-                          {complaint.priority}
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-sm font-semibold mb-1">Escalated</p>
-                      <p className="font-semibold">{complaint.escalated ? '⚠️ Yes' : '✅ No'}</p>
+                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                        Municipal Routing
+                      </p>
+                      <div className="text-xs text-gray-700 bg-accent-light/40 p-3 rounded-xl border border-accent-subtle/40">
+                        <p className="font-semibold text-accent mb-0.5">
+                          Assigned: {complaint.routedAuthority || 'Municipal Operations'}
+                        </p>
+                        <p className="text-gray-600">
+                          {complaint.aiSummary || 'Automated smart dispatch.'}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
-                  {/* AI Summary */}
-                  {complaint.aiSummary && (
-                    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-gray-600 text-sm font-semibold mb-1">AI Summary</p>
-                      <p className="text-gray-900 text-sm">{complaint.aiSummary}</p>
-                    </div>
-                  )}
-
-                  <div className="mb-4">
-                    <p className="text-gray-600 text-sm font-semibold mb-1">Description</p>
-                    <p className="text-gray-900 line-clamp-2">{complaint.description}</p>
-                  </div>
-
+                  {/* Grievance Photo Attachment */}
                   {complaint.photoData && (
-                    <div className="mb-4">
-                      <p className="text-gray-600 text-sm font-semibold mb-2">Photo</p>
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex items-start gap-4">
                       <img
                         src={complaint.photoData}
-                        alt={`Complaint ${complaint.id}`}
-                        className="max-h-48 rounded-lg"
+                        alt="Evidence"
+                        className="w-24 h-20 object-cover rounded-xl border border-gray-200 shadow-xs"
                       />
+                      <div className="text-xs text-gray-600">
+                        <span className="font-bold text-gray-800">Photo Proof</span>
+                        {complaint.imageVerificationNote && (
+                          <p className="text-[11px] text-gray-500 italic mt-0.5">
+                            🤖 AI Vision: {complaint.imageVerificationNote}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   )}
 
-                  <div className="flex gap-2 flex-wrap">
-                    <select
-                      value={complaint.status}
-                      onChange={(e) => handleStatusUpdate(complaint.id, e.target.value)}
-                      disabled={updatingId === complaint.id}
-                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-200"
-                    >
-                      <option value="OPEN">OPEN</option>
-                      <option value="IN_PROGRESS">IN_PROGRESS</option>
-                      <option value="RESOLVED">RESOLVED</option>
-                    </select>
-                    {updatingId === complaint.id && (
-                      <span className="text-blue-600 text-sm font-semibold">Updating...</span>
-                    )}
+                  {/* Status update selector for demo/staff */}
+                  <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                      Quick Status Update
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={complaint.status}
+                        onChange={(e) => handleStatusUpdate(complaint.id, e.target.value)}
+                        disabled={updatingId === complaint.id}
+                        className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-accent"
+                      >
+                        <option value="OPEN">OPEN</option>
+                        <option value="IN_PROGRESS">IN PROGRESS</option>
+                        <option value="RESOLVED">RESOLVED</option>
+                      </select>
+                      {updatingId === complaint.id && (
+                        <span className="text-xs text-accent font-bold">Updating...</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="bg-gray-100 rounded-lg p-8 text-center">
-              <p className="text-gray-600">No complaints found for the selected filter.</p>
+            <div className="bg-white rounded-2xl p-12 text-center shadow-card border border-gray-100 text-xs text-gray-400">
+              No complaints in this status filter.
             </div>
           )}
         </div>
