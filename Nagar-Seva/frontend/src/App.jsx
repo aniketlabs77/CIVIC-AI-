@@ -19,7 +19,7 @@ function PrivateRoute({ children, allowedRoles }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
+          <div className="animate-spin rounded-full h-10 w-10 border-4 border-[#7c5cff] border-t-transparent"></div>
           <p className="text-sm font-medium text-gray-500">Loading NagarSeva...</p>
         </div>
       </div>
@@ -45,7 +45,7 @@ function PublicOnlyRoute({ children }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
+          <div className="animate-spin rounded-full h-10 w-10 border-4 border-[#7c5cff] border-t-transparent"></div>
           <p className="text-sm font-medium text-gray-500">Checking session...</p>
         </div>
       </div>
@@ -58,28 +58,6 @@ function PublicOnlyRoute({ children }) {
   }
 
   return children;
-}
-
-function RootRedirect() {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
-          <p className="text-sm font-medium text-gray-500">Loading NagarSeva...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  const userRole = (user?.role || 'CITIZEN').toUpperCase();
-  return <Navigate to={userRole === 'ADMIN' ? '/admin' : '/my-complaints'} replace />;
 }
 
 export default function App() {
@@ -99,42 +77,38 @@ export default function App() {
             </PublicOnlyRoute>
           } />
 
-          {/* Root Path - Redirects to login if unsigned in, or to respective home dashboard */}
-          <Route path="/" element={<RootRedirect />} />
+          {/* Public Civic Pages - Accessible to everyone */}
+          <Route path="/" element={
+            <Layout>
+              <PublicDashboard />
+            </Layout>
+          } />
 
-          {/* Protected Pages for Authenticated Users */}
           <Route path="/dashboard" element={
-            <PrivateRoute allowedRoles={['CITIZEN', 'ADMIN']}>
-              <Layout>
-                <PublicDashboard />
-              </Layout>
-            </PrivateRoute>
+            <Layout>
+              <PublicDashboard />
+            </Layout>
           } />
           
           <Route path="/safety" element={
-            <PrivateRoute allowedRoles={['CITIZEN', 'ADMIN']}>
-              <Layout>
-                <SafetyMap />
-              </Layout>
-            </PrivateRoute>
+            <Layout>
+              <SafetyMap />
+            </Layout>
           } />
 
           <Route path="/report" element={
-            <PrivateRoute allowedRoles={['CITIZEN', 'ADMIN']}>
-              <Layout>
-                <ReportIssue />
-              </Layout>
-            </PrivateRoute>
+            <Layout>
+              <ReportIssue />
+            </Layout>
           } />
 
           <Route path="/track" element={
-            <PrivateRoute allowedRoles={['CITIZEN', 'ADMIN']}>
-              <Layout>
-                <TrackComplaints />
-              </Layout>
-            </PrivateRoute>
+            <Layout>
+              <TrackComplaints />
+            </Layout>
           } />
 
+          {/* Protected User Pages */}
           <Route path="/my-complaints" element={
             <PrivateRoute allowedRoles={['CITIZEN', 'ADMIN']}>
               <Layout>
@@ -153,7 +127,7 @@ export default function App() {
           } />
 
           {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Router>
     </AuthProvider>
