@@ -15,22 +15,19 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
+    private String firebaseUid;
+
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
     @Column(nullable = false, unique = true)
     private String email;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters")
-    @Column(nullable = false)
-    private String password;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role = UserRole.CITIZEN;
 
-    @NotBlank(message = "Name is required")
-    @Column(nullable = false)
+    @Column
     private String name;
 
     @Column(nullable = false, updatable = false)
@@ -45,9 +42,16 @@ public class User {
     public User() {
     }
 
-    public User(String email, String password, UserRole role, String name) {
+    public User(String firebaseUid, String email, UserRole role, String name) {
+        this.firebaseUid = firebaseUid;
         this.email = email;
-        this.password = password;
+        this.role = role;
+        this.name = name;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    public User(String email, UserRole role, String name) {
+        this.email = email;
         this.role = role;
         this.name = name;
         this.createdAt = LocalDateTime.now();
@@ -70,12 +74,12 @@ public class User {
         this.email = email;
     }
 
-    public String getPassword() {
-        return password;
+    public String getFirebaseUid() {
+        return firebaseUid;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setFirebaseUid(String firebaseUid) {
+        this.firebaseUid = firebaseUid;
     }
 
     public UserRole getRole() {

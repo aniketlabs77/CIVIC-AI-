@@ -3,66 +3,108 @@ import { Link } from 'react-router-dom';
 
 export default function Home() {
   return (
-    <div className="space-y-8">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg shadow-lg p-12">
-        <h1 className="text-4xl font-bold mb-4">Welcome to NagarSeva</h1>
-        <p className="text-xl mb-6">
-          A platform to report civic grievances and track their resolution
-        </p>
-        <Link
-          to="/report"
-          className="inline-block bg-white text-blue-600 font-bold py-3 px-8 rounded-lg hover:bg-blue-50 transition"
-        >
-          Report an Issue
-        </Link>
+    <div className="space-y-8 max-w-6xl mx-auto">
+      {/* Hero Section Card */}
+      <section className="bg-white rounded-3xl p-8 sm:p-14 shadow-card border border-gray-100/80 flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="max-w-xl space-y-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-accent-light text-accent border border-accent-subtle">
+            <span>✨ Gemini 1.5 Powered Civic Intelligence</span>
+          </div>
+          <h1 className="text-3xl sm:text-5xl font-black text-gray-900 tracking-tight leading-tight">
+            Transparent Municipal Action & Civic Trust
+          </h1>
+          <p className="text-sm sm:text-base text-gray-500 leading-relaxed">
+            Report civic grievances, automatically route tickets with Google Gemini AI, inspect real-time streetlight & safety road maps, and track verified resolution proof.
+          </p>
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <Link
+              to="/report"
+              className="px-6 py-3 rounded-full bg-dark hover:bg-dark-hover text-white text-xs sm:text-sm font-bold shadow-md transition"
+            >
+              Report an Issue
+            </Link>
+            <Link
+              to="/dashboard"
+              className="px-6 py-3 rounded-full bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 text-xs sm:text-sm font-bold shadow-xs transition"
+            >
+              View Public Dashboard
+            </Link>
+          </div>
+        </div>
+
+        <div className="w-full max-w-sm bg-gradient-to-br from-accent-light/60 to-accent-subtle/30 rounded-3xl p-6 border border-accent-subtle/40 flex flex-col gap-4 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center text-white text-3xl shadow-float mx-auto">
+            🏛️
+          </div>
+          <div>
+            <h3 className="font-extrabold text-base text-gray-900">City Operations Hub</h3>
+            <p className="text-xs text-gray-500 mt-1">
+              Real-time synchronization between citizens and municipal authorities.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-accent-subtle/50 text-left">
+            <div className="bg-white/80 p-2.5 rounded-xl">
+              <span className="text-[10px] font-bold text-gray-400 uppercase">AI Vision</span>
+              <p className="text-xs font-bold text-gray-900 mt-0.5">Auto-Verified</p>
+            </div>
+            <div className="bg-white/80 p-2.5 rounded-xl">
+              <span className="text-[10px] font-bold text-gray-400 uppercase">SLA Window</span>
+              <p className="text-xs font-bold text-accent mt-0.5">5m Escalation</p>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Features Section */}
       <section className="grid md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-          <div className="text-4xl mb-4">📋</div>
-          <h2 className="text-xl font-bold mb-2">Report Issues</h2>
-          <p className="text-gray-600">
-            Easily report civic problems like road damage, water issues, and more.
-          </p>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-          <div className="text-4xl mb-4">🔍</div>
-          <h2 className="text-xl font-bold mb-2">Track Status</h2>
-          <p className="text-gray-600">
-            Monitor the status of your complaints in real-time.
-          </p>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-          <div className="text-4xl mb-4">📊</div>
-          <h2 className="text-xl font-bold mb-2">View Dashboard</h2>
-          <p className="text-gray-600">
-            See all public complaints and their resolution status.
-          </p>
-        </div>
-      </section>
-
-      {/* Call to Action */}
-      <section className="bg-gray-100 rounded-lg p-8 text-center">
-        <h2 className="text-2xl font-bold mb-4">Get Started</h2>
-        <p className="text-gray-600 mb-6">
-          Help improve your city by reporting issues you encounter
-        </p>
-        <div className="flex justify-center gap-4">
-          <Link
-            to="/report"
-            className="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition"
-          >
-            Report Now
+        <div className="bg-white rounded-3xl p-7 shadow-card border border-gray-100/60 transition hover:shadow-card-hover flex flex-col justify-between">
+          <div>
+            <div className="w-12 h-12 rounded-2xl bg-accent-light flex items-center justify-center text-2xl mb-4 border border-accent-subtle/40">
+              📋
+            </div>
+            <h2 className="text-lg font-extrabold text-gray-900 tracking-tight mb-2">
+              Instant AI Grievance Filing
+            </h2>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              Upload photos of potholes, dark streetlights, or waste. Gemini AI categorizes, summarizes, and dispatches to the correct ward department.
+            </p>
+          </div>
+          <Link to="/report" className="mt-6 text-xs font-bold text-accent hover:underline inline-flex items-center gap-1">
+            File Grievance →
           </Link>
-          <Link
-            to="/dashboard"
-            className="bg-gray-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-700 transition"
-          >
-            View Dashboard
+        </div>
+
+        <div className="bg-white rounded-3xl p-7 shadow-card border border-gray-100/60 transition hover:shadow-card-hover flex flex-col justify-between">
+          <div>
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-2xl mb-4 border border-emerald-100">
+              🛡️
+            </div>
+            <h2 className="text-lg font-extrabold text-gray-900 tracking-tight mb-2">
+              Safe Route Navigator
+            </h2>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              Navigate city streets with real road geometry that dynamically highlights and avoids unlit streetlight corridors and reported night hazards.
+            </p>
+          </div>
+          <Link to="/safety" className="mt-6 text-xs font-bold text-emerald-700 hover:underline inline-flex items-center gap-1">
+            Explore Safety Map →
+          </Link>
+        </div>
+
+        <div className="bg-white rounded-3xl p-7 shadow-card border border-gray-100/60 transition hover:shadow-card-hover flex flex-col justify-between">
+          <div>
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-2xl mb-4 border border-amber-100">
+              📊
+            </div>
+            <h2 className="text-lg font-extrabold text-gray-900 tracking-tight mb-2">
+              Transparent Ward Metrics
+            </h2>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              Inspect live resolution rates, average repair times, and ward efficiency rankings on the city-wide public overview dashboard.
+            </p>
+          </div>
+          <Link to="/dashboard" className="mt-6 text-xs font-bold text-amber-700 hover:underline inline-flex items-center gap-1">
+            View Analytics →
           </Link>
         </div>
       </section>

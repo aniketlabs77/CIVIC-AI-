@@ -57,32 +57,43 @@ export default function AdminPanel() {
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusBadge = (status) => {
     switch (status) {
       case 'OPEN':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-amber-50 text-amber-700 border border-amber-200/60';
       case 'IN_PROGRESS':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-accent-light text-accent border border-accent-subtle';
       case 'RESOLVED':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-emerald-50 text-emerald-700 border border-emerald-200/60';
       case 'ESCALATED':
-        return 'bg-red-200 text-red-900 border-red-300 font-bold';
+        return 'bg-rose-50 text-rose-700 border border-rose-200/60 font-bold';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-50 text-gray-700 border border-gray-200';
     }
   };
 
-  const getPriorityColor = (priority) => {
+  const getPriorityBadge = (priority) => {
     switch (priority) {
       case 'HIGH':
-        return 'bg-red-100 text-red-800';
+        return 'bg-rose-50 text-rose-700 border border-rose-100';
       case 'MEDIUM':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-amber-50 text-amber-700 border border-amber-100';
       case 'LOW':
-        return 'bg-green-100 text-green-800';
+        return 'bg-emerald-50 text-emerald-700 border border-emerald-100';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-50 text-gray-700 border border-gray-100';
     }
+  };
+
+  const getCategoryIcon = (category) => {
+    const cat = (category || '').toLowerCase();
+    if (cat.includes('streetlight') || cat.includes('light')) return '💡';
+    if (cat.includes('road') || cat.includes('pothole')) return '🛣️';
+    if (cat.includes('drain') || cat.includes('water')) return '🚰';
+    if (cat.includes('dump') || cat.includes('garbage') || cat.includes('waste')) return '🗑️';
+    if (cat.includes('safe') || cat.includes('crime')) return '🛡️';
+    if (cat.includes('encroach')) return '🚧';
+    return '📋';
   };
 
   const filteredComplaints = filterStatus === 'ALL'
@@ -90,39 +101,51 @@ export default function AdminPanel() {
     : complaints.filter(c => c.status === filterStatus);
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Admin Panel</h1>
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <label className="block text-gray-700 font-bold mb-2">
-            Filter by Status
-          </label>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full md:w-48 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="ALL">All Complaints</option>
-            <option value="OPEN">Open</option>
-            <option value="IN_PROGRESS">In Progress</option>
-            <option value="RESOLVED">Resolved</option>
-            <option value="ESCALATED">Escalated</option>
-          </select>
+    <div className="space-y-6">
+      {/* Header Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+            Municipal Admin Operations
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+            Resolve citizen complaints, review AI vision proof and manage ward tickets
+          </p>
+        </div>
+
+        {/* Status Filter Pills */}
+        <div className="flex items-center gap-1 bg-white p-1 rounded-full shadow-card border border-gray-100 overflow-x-auto">
+          {['ALL', 'OPEN', 'IN_PROGRESS', 'RESOLVED', 'ESCALATED'].map((st) => (
+            <button
+              key={st}
+              type="button"
+              onClick={() => setFilterStatus(st)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                filterStatus === st
+                  ? 'bg-accent text-white shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              {st === 'ALL' ? 'All Tickets' : st.replace('_', ' ')}
+            </button>
+          ))}
         </div>
       </div>
 
       {error && (
-        <div className="bg-red-100 text-red-800 p-4 rounded-lg mb-8">
+        <div className="p-4 bg-rose-50 text-rose-700 text-xs rounded-2xl border border-rose-200">
           {error}
         </div>
       )}
 
       {loading && (
-        <div className="text-center py-12">
-          <p className="text-gray-600 text-lg">Loading complaints...</p>
+        <div className="py-16 text-center text-xs text-gray-400">
+          <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+          Loading administration queue...
         </div>
       )}
 
+      {/* Complaints Feed */}
       {!loading && !error && (
         <div>
           {filteredComplaints.length > 0 ? (
@@ -130,193 +153,205 @@ export default function AdminPanel() {
               {filteredComplaints.map((complaint) => (
                 <div
                   key={complaint.id}
-                  className={`bg-white rounded-lg shadow-md hover:shadow-lg transition p-4 border-l-4 ${
-                    complaint.status === 'OPEN' ? 'border-red-500' :
-                    complaint.status === 'IN_PROGRESS' ? 'border-yellow-500' :
-                    complaint.status === 'RESOLVED' ? 'border-green-500' : 'border-red-600'
-                  }`}
+                  className="bg-white rounded-2xl shadow-card border border-gray-100/70 p-5 sm:p-6 transition hover:shadow-card-hover"
                 >
-                  <div className="grid md:grid-cols-6 gap-4 mb-3">
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold">ID</p>
-                      <p className="text-lg font-bold">{complaint.id}</p>
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+                    <div className="flex items-start gap-3.5 min-w-0">
+                      <div className="w-11 h-11 rounded-2xl bg-gray-50 flex items-center justify-center text-xl shadow-xs border border-gray-100 shrink-0">
+                        {getCategoryIcon(complaint.category)}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-base font-extrabold text-gray-900">
+                            {complaint.category}
+                          </span>
+                          <span className="text-xs font-bold text-gray-400">
+                            #{complaint.id} • {complaint.ward || 'Ward 1'}
+                          </span>
+                          {complaint.priority && (
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getPriorityBadge(complaint.priority)}`}>
+                              {complaint.priority} Priority
+                            </span>
+                          )}
+                          {complaint.imageVerified === true && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                              ✓ AI Image Verified
+                            </span>
+                          )}
+                          {complaint.escalated && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700">
+                              ⚠️ Escalated
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          📍 {complaint.location} • Reported by: <span className="font-semibold text-gray-700">{complaint.citizen?.name || complaint.citizen?.email || 'Citizen'}</span>
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold">Citizen</p>
-                      <p className="font-semibold">{complaint.citizen?.name || complaint.citizen?.email || 'Unknown'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold">Category</p>
-                      <p className="font-semibold">{complaint.category}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold">Ward</p>
-                      <p className="font-semibold">{complaint.ward || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold">Location</p>
-                      <p className="font-semibold text-sm">{complaint.location}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold">Status</p>
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold ${getStatusColor(complaint.status)}`}>
+
+                    <div className="flex items-center gap-3 shrink-0 self-end lg:self-center">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusBadge(complaint.status)}`}>
                         {complaint.status}
                       </span>
-                    </div>
-                  </div>
-
-                  {/* AI Routing Info Row */}
-                  <div className="grid md:grid-cols-4 gap-4 mb-3 p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold mb-1">Routed Authority</p>
-                      <p className="text-sm font-semibold text-blue-700">{complaint.routedAuthority || 'Not assigned'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold mb-1">Priority</p>
-                      {complaint.priority && (
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold ${priority === 'HIGH' ? 'bg-red-100 text-red-800' : priority === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
-                          {complaint.priority}
-                        </span>
+                      {complaint.status !== 'RESOLVED' && (
+                        <button
+                          onClick={() => handleOpenResolve(complaint)}
+                          className="px-4 py-1.5 rounded-full bg-dark hover:bg-dark-hover text-white text-xs font-semibold shadow-sm transition"
+                        >
+                          Resolve Ticket
+                        </button>
                       )}
                     </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold mb-1">Escalated</p>
-                      <p className="text-sm">{complaint.escalated ? '⚠️ Yes' : '✅ No'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-semibold mb-1">Created</p>
-                      <p className="text-sm">{new Date(complaint.createdAt).toLocaleDateString()}</p>
-                    </div>
                   </div>
 
-                  {/* AI Summary */}
-                  {complaint.aiSummary && (
-                    <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-gray-600 text-xs font-semibold mb-1">AI Summary</p>
-                      <p className="text-gray-900 text-sm">{complaint.aiSummary}</p>
-                    </div>
-                  )}
-
-                  <div className="mb-3">
-                    <p className="text-gray-600 text-xs font-semibold mb-1">Description</p>
-                    <p className="text-gray-900 line-clamp-2">{complaint.description}</p>
-                  </div>
-
-                  {/* Resolution Details */}
-                  {complaint.status === 'RESOLVED' && (complaint.resolutionPhotoUrl || complaint.resolutionNote) && (
-                    <div className="mb-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <p className="text-gray-600 text-xs font-semibold mb-2 flex items-center gap-1">
-                        <span className="text-green-600">✓</span> Resolution Details
+                  {/* Grievance Description & Summary */}
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                        Citizen Description
                       </p>
-                      
-                      {complaint.resolutionPhotoUrl && (
-                        <div className="mb-2">
-                          <p className="text-gray-600 text-xs font-semibold mb-1">Resolution Photo</p>
-                          <img
-                            src={complaint.resolutionPhotoUrl}
-                            alt="Resolution"
-                            className="max-h-48 rounded-lg border"
-                          />
-                        </div>
-                      )}
-                      
-                      {complaint.resolutionNote && (
-                        <div>
-                          <p className="text-gray-600 text-xs font-semibold mb-1">Resolution Note</p>
-                          <p className="text-gray-900 text-sm">{complaint.resolutionNote}</p>
-                        </div>
-                      )}
-                      
-                      {complaint.resolvedAt && (
-                        <p className="text-xs text-gray-500 mt-2">
-                          Resolved on: {new Date(complaint.resolvedAt).toLocaleString()}
+                      <p className="text-xs text-gray-700 leading-relaxed bg-gray-50/60 p-3 rounded-xl border border-gray-100">
+                        {complaint.description}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                        AI Routing & Summary
+                      </p>
+                      <div className="text-xs text-gray-700 bg-accent-light/40 p-3 rounded-xl border border-accent-subtle/40">
+                        <p className="font-semibold text-accent mb-0.5">
+                          Assigned Authority: {complaint.routedAuthority || 'Municipal Field Operations'}
                         </p>
-                      )}
+                        <p className="text-gray-600">
+                          {complaint.aiSummary || 'AI automated grievance assessment completed.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Grievance Photo Attachment */}
+                  {complaint.photoData && (
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex items-start gap-4">
+                      <img
+                        src={complaint.photoData}
+                        alt="Grievance Evidence"
+                        className="w-24 h-20 object-cover rounded-xl border border-gray-200 shadow-xs"
+                      />
+                      <div className="text-xs text-gray-600">
+                        <span className="font-bold text-gray-800">Photo Proof Attached</span>
+                        {complaint.imageVerificationNote && (
+                          <p className="text-[11px] text-gray-500 italic mt-0.5">
+                            🤖 AI Vision: {complaint.imageVerificationNote}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   )}
 
-                  {/* Resolve Button for OPEN/IN_PROGRESS complaints */}
-                  {(complaint.status === 'OPEN' || complaint.status === 'IN_PROGRESS') && (
-                    <button
-                      onClick={() => handleOpenResolve(complaint)}
-                      className="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition"
-                    >
-                      Mark as Resolved
-                    </button>
+                  {/* Resolution Details If Resolved */}
+                  {complaint.status === 'RESOLVED' && (complaint.resolutionPhotoUrl || complaint.resolutionNote) && (
+                    <div className="mt-4 p-4 rounded-xl bg-emerald-50/60 border border-emerald-100 text-xs">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-bold text-emerald-900 flex items-center gap-1">
+                          ✓ Resolution Completed
+                        </span>
+                        {complaint.resolutionVerified === true && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-200 text-emerald-900">
+                            ✓ AI Verified Fix
+                          </span>
+                        )}
+                      </div>
+                      {complaint.resolutionNote && (
+                        <p className="text-emerald-800">{complaint.resolutionNote}</p>
+                      )}
+                      {complaint.resolutionPhotoUrl && (
+                        <img
+                          src={complaint.resolutionPhotoUrl}
+                          alt="Resolution Proof"
+                          className="mt-2 max-h-36 rounded-lg border border-emerald-200"
+                        />
+                      )}
+                    </div>
                   )}
                 </div>
               ))}
             </div>
           ) : (
-            <div className="bg-gray-100 rounded-lg p-8 text-center">
-              <p className="text-gray-600">No complaints found for the selected filter.</p>
+            <div className="bg-white rounded-2xl p-12 text-center shadow-card border border-gray-100 text-xs text-gray-400">
+              No complaints in this status filter.
             </div>
           )}
         </div>
       )}
 
-      {/* Resolve Modal */}
+      {/* Resolution Modal */}
       {resolvingId && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Mark Complaint #{resolvingId} as Resolved</h2>
-                <button
-                  onClick={handleCloseResolve}
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
-                >
-                  ×
-                </button>
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-lg p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+              <div>
+                <h3 className="text-lg font-extrabold text-gray-900 tracking-tight">
+                  Resolve Ticket #{resolvingId}
+                </h3>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Attach repair completion photo & operational resolution note
+                </p>
+              </div>
+              <button
+                onClick={handleCloseResolve}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center text-xs font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleResolveSubmit} className="space-y-4 mt-5">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  Resolution Photo URL / Image Link
+                </label>
+                <input
+                  type="url"
+                  required
+                  placeholder="https://example.com/repair-proof.jpg"
+                  value={resolutionForm.resolutionPhotoUrl}
+                  onChange={(e) => setResolutionForm(prev => ({ ...prev, resolutionPhotoUrl: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                />
               </div>
 
-              <form onSubmit={handleResolveSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-gray-700 font-bold mb-2">
-                    Resolution Photo (Base64) *
-                  </label>
-                  <textarea
-                    value={resolutionForm.resolutionPhotoUrl}
-                    onChange={(e) => setResolutionForm(prev => ({ ...prev, resolutionPhotoUrl: e.target.value }))}
-                    required
-                    rows={4}
-                    placeholder="Paste base64 encoded image here..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Paste a base64 encoded image (data:image/...;base64,...)</p>
-                </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  Resolution Description & Action Note
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  placeholder="Details of repair or action taken by municipal department..."
+                  value={resolutionForm.resolutionNote}
+                  onChange={(e) => setResolutionForm(prev => ({ ...prev, resolutionNote: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+              </div>
 
-                <div>
-                  <label className="block text-gray-700 font-bold mb-2">
-                    Resolution Note *
-                  </label>
-                  <textarea
-                    value={resolutionForm.resolutionNote}
-                    onChange={(e) => setResolutionForm(prev => ({ ...prev, resolutionNote: e.target.value }))}
-                    required
-                    rows={3}
-                    placeholder="Describe what was done to resolve this issue..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={handleCloseResolve}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700"
-                  >
-                    Mark Resolved
-                  </button>
-                </div>
-              </form>
-            </div>
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={handleCloseResolve}
+                  className="px-4 py-2 rounded-full text-xs font-semibold text-gray-600 hover:bg-gray-100 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-full bg-accent hover:bg-accent-hover text-white text-xs font-semibold shadow-sm transition"
+                >
+                  Submit Resolution Proof
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import apiClient from '../api/apiClient';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth } from '../firebase';
+import { useAuth } from '../context/AuthContext';
 
 export default function Register() {
+  const [selectedRole, setSelectedRole] = useState('CITIZEN'); // 'CITIZEN' | 'ADMIN'
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -10,6 +13,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { syncUserProfile, fetchUserProfile } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,54 +32,146 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await apiClient.post('/api/auth/register', { name, email, password });
-      setError('');
-      navigate('/login');
+      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      
+      if (name.trim()) {
+        try {
+          await updateProfile(userCredential.user, { displayName: name.trim() });
+        } catch (nameErr) {
+          console.warn('Failed to update display name:', nameErr);
+        }
+      }
+
+      // Sync role selection to backend database
+      try {
+        await syncUserProfile({
+          name: name.trim() || (selectedRole === 'ADMIN' ? 'Admin Officer' : 'Citizen User'),
+          role: selectedRole,
+        });
+      } catch (syncErr) {
+        console.warn('Profile sync notice:', syncErr);
+      }
+
+      // Fetch combined profile and navigate to appropriate view
+      const userProfile = await fetchUserProfile(userCredential.user);
+      if (selectedRole === 'ADMIN' || (userProfile && userProfile.role === 'ADMIN')) {
+        navigate('/admin');
+      } else {
+        navigate('/my-complaints');
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
+      let msg = 'Registration failed. Please try again.';
+      if (err.code === 'auth/email-already-in-use') {
+        msg = 'This email is already registered. Please sign in instead.';
+      } else if (err.code === 'auth/invalid-email') {
+        msg = 'Invalid email address.';
+      } else if (err.code === 'auth/weak-password') {
+        msg = 'Password is too weak. Please use at least 6 characters.';
+      } else if (err.message) {
+        msg = err.message;
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Create your account</h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Already have an account?{' '}
-          <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-            Sign in
-          </Link>
-        </p>
-      </div>
+    <div className="min-h-[78vh] flex flex-col justify-center items-center py-6 px-4">
+      <div className="w-full max-w-md">
+        {/* Branding header */}
+        <div className="text-center mb-6">
+          <div className="w-12 h-12 rounded-2xl bg-accent flex items-center justify-center text-white text-xl font-black shadow-md mx-auto mb-3">
+            🏛️
+          </div>
+          <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+            Create NagarSeva Account
+          </h2>
+          <p className="mt-1 text-xs text-gray-500">
+            Already have an account?{' '}
+            <Link to="/login" className="font-bold text-accent hover:underline">
+              Sign in
+            </Link>
+          </p>
+        </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        {/* Card Container */}
+        <div className="bg-white rounded-3xl p-7 sm:p-9 shadow-card border border-gray-100/80">
+          {/* Role Pill Switcher */}
+          <div className="mb-5">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2 text-center">
+              Choose Your Account Role
+            </label>
+            <div className="grid grid-cols-2 gap-1.5 p-1 bg-gray-100 rounded-full">
+              <button
+                type="button"
+                onClick={() => setSelectedRole('CITIZEN')}
+                className={`py-2 px-3 rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                  selectedRole === 'CITIZEN'
+                    ? 'bg-white text-gray-900 shadow-xs'
+                    : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                <span>👤</span> Citizen
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedRole('ADMIN')}
+                className={`py-2 px-3 rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                  selectedRole === 'ADMIN'
+                    ? 'bg-white text-gray-900 shadow-xs'
+                    : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                <span>🛡️</span> Municipal Admin
+              </button>
+            </div>
+          </div>
+
+          {/* Role Description Card */}
+          <div className={`mb-5 p-3 rounded-2xl border text-xs font-medium ${
+            selectedRole === 'ADMIN'
+              ? 'bg-accent-light/50 border-accent-subtle text-accent'
+              : 'bg-gray-50 border-gray-200 text-gray-700'
+          }`}>
+            <p className="font-bold mb-0.5">
+              {selectedRole === 'ADMIN' ? '🛡️ Municipal Admin Account:' : '👤 Citizen Account:'}
+            </p>
+            <p className="text-[11px] text-gray-500">
+              {selectedRole === 'ADMIN'
+                ? 'Authorized access to review complaints, submit resolution photo proofs, and manage ward operations.'
+                : 'Report local grievances, upload photo evidence, track ticket resolution, and explore safety routes.'}
+            </p>
+          </div>
+
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
+            <div className="mb-5 p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-xs flex items-start gap-2">
+              <span className="text-sm">⚠️</span>
+              <span>{error}</span>
             </div>
           )}
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="name" className="sr-only">Full name</label>
+              <label htmlFor="name" className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                Full Name
+              </label>
               <input
                 id="name"
                 name="name"
                 type="text"
-                autoComplete="name"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Full name"
+                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                placeholder="Ramesh Kumar"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="sr-only">Email address</label>
+              <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                Email Address
+              </label>
               <input
                 id="email"
                 name="email"
@@ -84,48 +180,59 @@ export default function Register() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
+                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                placeholder={selectedRole === 'ADMIN' ? 'officer@nagarseva.com' : 'citizen@example.com'}
               />
             </div>
 
-            <div>
-              <label htmlFor="password" className="sr-only">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Password (min 6 characters)"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="confirmPassword" className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                  Confirm
+                </label>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                  placeholder="••••••••"
+                />
+              </div>
             </div>
 
-            <div>
-              <label htmlFor="confirmPassword" className="sr-only">Confirm password</label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Confirm password"
-              />
-            </div>
-
-            <div>
+            <div className="pt-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                className="w-full py-3 px-4 rounded-full bg-dark hover:bg-dark-hover text-white text-xs sm:text-sm font-bold shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading ? 'Creating account...' : 'Create account'}
+                {loading ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Creating account...</span>
+                  </>
+                ) : (
+                  <span>Create {selectedRole === 'ADMIN' ? 'Admin' : 'Citizen'} Account</span>
+                )}
               </button>
             </div>
           </form>
@@ -134,4 +241,3 @@ export default function Register() {
     </div>
   );
 }
-

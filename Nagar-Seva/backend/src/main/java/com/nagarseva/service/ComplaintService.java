@@ -45,21 +45,13 @@ public class ComplaintService implements CommandLineRunner {
     @Autowired
     private ComplaintRepository complaintRepository;
 
+    @Autowired
+    private GeminiService geminiService;
+
     @Value("${app.escalation.threshold-minutes:5}")
     private int escalationThresholdMinutes;
 
-    private final CloseableHttpClient httpClient;
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    private final String groqApiKey;
-
     public ComplaintService() {
-        this.httpClient = HttpClients.createDefault();
-        this.groqApiKey = System.getenv("GROQ_API_KEY");
-        if (groqApiKey != null && !groqApiKey.isBlank()) {
-            log.info("Groq API key found - AI routing enabled");
-        } else {
-            log.warn("GROQ_API_KEY not set - AI routing will use fallback logic");
-        }
     }
 
     /**
@@ -77,7 +69,7 @@ public class ComplaintService implements CommandLineRunner {
     }
 
     /**
-     * Create a new complaint with AI-powered routing
+     * Create a new complaint with AI-powered routing & multimodal image verification
      */
     public Complaint createComplaint(Complaint complaint) {
         // Set defaults
@@ -93,22 +85,16 @@ public class ComplaintService implements CommandLineRunner {
         // Set issueType based on category
         setIssueType(complaint);
 
-        // Call AI for routing if API key is available
-        if (groqApiKey != null && !groqApiKey.isBlank()) {
-            try {
-                AIRoutingResult aiResult = callGroqRouting(complaint);
-                complaint.setRoutedAuthority(aiResult.routedAuthority());
-                complaint.setAiSummary(aiResult.aiSummary());
-                complaint.setPriority(aiResult.priority());
-                log.info("AI routing completed for complaint: authority={}, priority={}",
-                        aiResult.routedAuthority(), aiResult.priority());
-            } catch (Exception e) {
-                log.error("AI routing failed, using fallback: {}", e.getMessage());
-                applyFallbackRouting(complaint);
-            }
-        } else {
-            applyFallbackRouting(complaint);
-        }
+        // Analyze and verify using Gemini (multimodal if photo present)
+        GeminiService.ComplaintAnalysisResult aiResult = geminiService.classifyAndVerifyComplaint(complaint, complaint.getPhotoData());
+        complaint.setRoutedAuthority(aiResult.routedAuthority());
+        complaint.setAiSummary(aiResult.aiSummary());
+        complaint.setPriority(aiResult.priority());
+        complaint.setImageVerified(aiResult.imageVerified());
+        complaint.setImageVerificationNote(aiResult.imageVerificationNote());
+
+        log.info("Complaint created: ID={}, authority={}, priority={}, imageVerified={}",
+                complaint.getId(), aiResult.routedAuthority(), aiResult.priority(), aiResult.imageVerified());
 
         return complaintRepository.save(complaint);
     }
@@ -134,133 +120,7 @@ public class ComplaintService implements CommandLineRunner {
         }
     }
 
-    /**
-     * Call Groq API for complaint classification and routing
-     */
-    private AIRoutingResult callGroqRouting(Complaint complaint) throws IOException, ParseException {
-        String prompt = buildPrompt(complaint);
 
-        // Build JSON request
-        ObjectNode requestBody = objectMapper.createObjectNode();
-        requestBody.put("model", GROQ_MODEL);
-        requestBody.put("temperature", 0.1);
-        requestBody.put("max_tokens", 300);
-        requestBody.put("response_format", "json_object");
-
-        ObjectNode systemMessage = objectMapper.createObjectNode();
-        systemMessage.put("role", "system");
-        systemMessage.put("content", "You are a civic complaint routing assistant. Output ONLY valid JSON with fields: routedAuthority, aiSummary, priority (LOW/MEDIUM/HIGH). No extra text.");
-
-        ObjectNode userMessage = objectMapper.createObjectNode();
-        userMessage.put("role", "user");
-        userMessage.put("content", prompt);
-
-        requestBody.set("messages", objectMapper.createArrayNode().add(systemMessage).add(userMessage));
-
-        String jsonRequest = objectMapper.writeValueAsString(requestBody);
-
-        // Create HTTP request
-        HttpPost httpPost = new HttpPost(GROQ_API_URL);
-        httpPost.setHeader("Authorization", "Bearer " + groqApiKey);
-        httpPost.setHeader("Content-Type", "application/json");
-        httpPost.setEntity(new StringEntity(jsonRequest, ContentType.APPLICATION_JSON));
-
-        // Execute request
-        try (var response = httpClient.execute(httpPost)) {
-            String responseBody = EntityUtils.toString(response.getEntity());
-            int statusCode = response.getCode();
-
-            if (statusCode != 200) {
-                throw new IOException("Groq API error: " + statusCode + " - " + responseBody);
-            }
-
-            // Parse response
-            JsonNode responseJson = objectMapper.readTree(responseBody);
-            String content = responseJson.path("choices").get(0).path("message").path("content").asText();
-
-            // Parse the JSON content from the model
-            JsonNode resultJson = objectMapper.readTree(content);
-            String routedAuthority = resultJson.get("routedAuthority").asText();
-            String aiSummary = resultJson.get("aiSummary").asText();
-            ComplaintPriority priority = ComplaintPriority.valueOf(resultJson.get("priority").asText());
-
-            return new AIRoutingResult(routedAuthority, aiSummary, priority);
-        }
-    }
-
-    private String buildPrompt(Complaint complaint) {
-        return String.format("""
-                Classify this civic complaint and determine routing:
-                
-                Category: %s
-                Description: %s
-                Location: %s
-                Ward: %s
-                Coordinates: %.6f, %.6f
-                
-                Routing rules:
-                - Streetlight/Poor Lighting → Electricity Department
-                - Drainage/Waterlogging → Water Board
-                - Road Damage/Encroachment → Municipal Road Department
-                - Illegal Dumping → Sanitation Department
-                - Unsafe Area → Local Police / Women Safety Cell
-                
-                Priority rules:
-                - HIGH: Immediate danger (Unsafe Area near schools/hospitals, major road collapse, gas leak)
-                - MEDIUM: Significant inconvenience (flooding, blocked roads, broken streetlights on busy roads)
-                - LOW: Minor issues (single pothole, minor dumping, non-urgent lighting)
-                
-                Output ONLY JSON:
-                {
-                  "routedAuthority": "Department name",
-                  "aiSummary": "1-2 sentence summary for the authority",
-                  "priority": "LOW|MEDIUM|HIGH"
-                }
-                """, complaint.getCategory(), complaint.getDescription(),
-                complaint.getLocation(), complaint.getWard(),
-                complaint.getLatitude(), complaint.getLongitude());
-    }
-
-    /**
-     * Fallback routing when AI is unavailable
-     */
-    private void applyFallbackRouting(Complaint complaint) {
-        String category = complaint.getCategory();
-        String routedAuthority;
-        ComplaintPriority priority;
-
-        switch (category) {
-            case "Streetlight" -> {
-                routedAuthority = "Electricity Department";
-                priority = ComplaintPriority.MEDIUM;
-            }
-            case "Drainage" -> {
-                routedAuthority = "Water Board";
-                priority = ComplaintPriority.MEDIUM;
-            }
-            case "Road Damage", "Encroachment" -> {
-                routedAuthority = "Municipal Road Department";
-                priority = ComplaintPriority.MEDIUM;
-            }
-            case "Illegal Dumping" -> {
-                routedAuthority = "Sanitation Department";
-                priority = ComplaintPriority.LOW;
-            }
-            case "Unsafe Area" -> {
-                routedAuthority = "Local Police / Women Safety Cell";
-                priority = ComplaintPriority.HIGH;
-            }
-            default -> {
-                routedAuthority = "Municipal Corporation";
-                priority = ComplaintPriority.LOW;
-            }
-        }
-
-        complaint.setRoutedAuthority(routedAuthority);
-        complaint.setPriority(priority);
-        complaint.setAiSummary("Auto-routed based on category: " + category +
-                ". " + complaint.getDescription().substring(0, Math.min(100, complaint.getDescription().length())) + "...");
-    }
 
     /**
      * Update an existing complaint
@@ -543,6 +403,68 @@ public class ComplaintService implements CommandLineRunner {
     }
 
     /**
+     * Check route safety along a sequence of real road coordinates (geometry)
+     * Returns warning if HIGH risk safety incidents are within ROUTE_CHECK_RADIUS_KM of any road segment
+     */
+    public Map<String, Object> checkRouteGeometrySafety(List<List<Double>> coordinates) {
+        Map<String, Object> result = new HashMap<>();
+        if (coordinates == null || coordinates.size() < 2) {
+            result.put("safe", true);
+            result.put("message", "Route appears safe");
+            result.put("riskyLocations", Collections.emptyList());
+            return result;
+        }
+
+        List<Complaint> highRiskComplaints = complaintRepository.findAll().stream()
+                .filter(c -> "SAFETY".equals(c.getIssueType()))
+                .filter(c -> "HIGH".equals(calculateRiskLevel(c, 
+                    complaintRepository.findAll().stream()
+                        .filter(s -> "SAFETY".equals(s.getIssueType()))
+                        .collect(Collectors.toList()))))
+                .collect(Collectors.toList());
+
+        List<Map<String, Object>> riskyLocations = new ArrayList<>();
+
+        for (Complaint c : highRiskComplaints) {
+            double minDistanceToRoute = Double.MAX_VALUE;
+            // Check distance to each segment along the road polyline
+            for (int i = 0; i < coordinates.size() - 1; i++) {
+                List<Double> p1 = coordinates.get(i);
+                List<Double> p2 = coordinates.get(i + 1);
+                if (p1.size() >= 2 && p2.size() >= 2) {
+                    double d = distanceToLineSegment(p1.get(0), p1.get(1), p2.get(0), p2.get(1), c.getLatitude(), c.getLongitude());
+                    if (d < minDistanceToRoute) {
+                        minDistanceToRoute = d;
+                    }
+                }
+            }
+
+            if (minDistanceToRoute <= ROUTE_CHECK_RADIUS_KM) {
+                Map<String, Object> risky = new HashMap<>();
+                risky.put("id", c.getId());
+                risky.put("category", c.getCategory());
+                risky.put("location", c.getLocation());
+                risky.put("latitude", c.getLatitude());
+                risky.put("longitude", c.getLongitude());
+                risky.put("riskLevel", "HIGH");
+                risky.put("timeOfDay", getTimeOfDay(c.getCreatedAt()));
+                riskyLocations.add(risky);
+            }
+        }
+
+        if (riskyLocations.isEmpty()) {
+            result.put("safe", true);
+            result.put("message", "Route is safe - no high-risk safety incidents detected along this road path");
+            result.put("riskyLocations", Collections.emptyList());
+        } else {
+            result.put("safe", false);
+            result.put("message", "This route passes near " + riskyLocations.size() + " reported unsafe area(s) - consider alternate route or travel during daytime");
+            result.put("riskyLocations", riskyLocations);
+        }
+        return result;
+    }
+
+    /**
      * Calculate distance from a point to a line segment (for route checking)
      */
     private double distanceToLineSegment(double lat1, double lon1, double lat2, double lon2, double latP, double lonP) {
@@ -637,8 +559,35 @@ public class ComplaintService implements CommandLineRunner {
             Complaint c = new Complaint(s.category(), s.description(), s.location(), s.ward(), s.latitude(), s.longitude());
             c.setStatus(s.status());
             c.setEscalated(s.status() == ComplaintStatus.ESCALATED);
-            // Use fallback routing for seed data
-            applyFallbackRouting(c);
+            
+            // Assign default routing & summary for seeded demo complaints
+            switch (s.category()) {
+                case "Streetlight" -> {
+                    c.setRoutedAuthority("Electricity Department");
+                    c.setPriority(ComplaintPriority.MEDIUM);
+                }
+                case "Drainage" -> {
+                    c.setRoutedAuthority("Water Board");
+                    c.setPriority(ComplaintPriority.MEDIUM);
+                }
+                case "Road Damage", "Encroachment" -> {
+                    c.setRoutedAuthority("Municipal Road Department");
+                    c.setPriority(ComplaintPriority.MEDIUM);
+                }
+                case "Illegal Dumping" -> {
+                    c.setRoutedAuthority("Sanitation Department");
+                    c.setPriority(ComplaintPriority.LOW);
+                }
+                case "Unsafe Area" -> {
+                    c.setRoutedAuthority("Local Police / Women Safety Cell");
+                    c.setPriority(ComplaintPriority.HIGH);
+                }
+                default -> {
+                    c.setRoutedAuthority("Municipal Corporation");
+                    c.setPriority(ComplaintPriority.LOW);
+                }
+            }
+            c.setAiSummary("Auto-classified civic issue in " + s.ward() + ": " + s.description());
             setIssueType(c); // Set issueType for seeded data
             if (s.status() == ComplaintStatus.RESOLVED) {
                 c.setResolvedAt(c.getCreatedAt().plusHours(2 + (long)(Math.random() * 24)));
@@ -649,9 +598,4 @@ public class ComplaintService implements CommandLineRunner {
     }
 
     private record SampleComplaint(String category, String description, String location, String ward, double latitude, double longitude, ComplaintStatus status) {}
-
-    /**
-     * Record for AI routing result
-     */
-    private record AIRoutingResult(String routedAuthority, String aiSummary, ComplaintPriority priority) {}
 }

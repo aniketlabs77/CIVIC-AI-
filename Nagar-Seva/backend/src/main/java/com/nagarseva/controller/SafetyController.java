@@ -40,4 +40,14 @@ public class SafetyController {
         Map<String, Object> result = complaintService.checkRouteSafety(startLat, startLng, endLat, endLng);
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * POST /api/safety/route-check-geometry - Check route safety along real road coordinates
+     * Request body: [[lat1, lng1], [lat2, lng2], ...]
+     */
+    @PostMapping("/route-check-geometry")
+    public ResponseEntity<Map<String, Object>> checkRouteGeometry(@RequestBody List<List<Double>> coordinates) {
+        Map<String, Object> result = complaintService.checkRouteGeometrySafety(coordinates);
+        return ResponseEntity.ok(result);
+    }
 }

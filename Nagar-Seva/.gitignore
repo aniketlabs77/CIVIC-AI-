@@ -7,19 +7,27 @@ backend/*.log
 backend/.vscode/
 backend/.idea/
 backend/*.iml
+backend/*serviceAccount*.json
+backend/*.json
 
 # Frontend (Node/Vite)
 frontend/node_modules/
 frontend/dist/
+frontend/.env
 frontend/.env.local
 frontend/.env.*.local
 frontend/.vscode/
 frontend/.idea/
 frontend/*.iml
 
-# Environment files
+# Environment & Credentials
+.env
 .env.local
 .env.*.local
+*serviceAccount*.json
+serviceAccountKey.json
+*.pem
+*.key
 
 # OS files
 .DS_Store

@@ -1,11 +1,8 @@
 package com.nagarseva.controller;
 
 import com.nagarseva.entity.Complaint;
-import com.nagarseva.entity.ComplaintStatus;
 import com.nagarseva.service.ComplaintService;
-import com.nagarseva.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +18,7 @@ public class AdminController {
     private ComplaintService complaintService;
 
     @Autowired
-    private UserService userService;
+    private com.nagarseva.service.GeminiService geminiService;
 
     /**
      * GET /api/admin/complaints - Get all complaints (admin view)
@@ -33,7 +30,7 @@ public class AdminController {
     }
 
     /**
-     * PATCH /api/admin/complaints/{id}/resolve - Mark complaint as resolved with photo and note
+     * PATCH /api/admin/complaints/{id}/resolve - Mark complaint as resolved with photo, note and AI verification
      */
     @PatchMapping("/complaints/{id}/resolve")
     public ResponseEntity<?> resolveComplaint(
@@ -53,22 +50,31 @@ public class AdminController {
             return ResponseEntity.badRequest().body(error);
         }
 
-        Optional<Complaint> updatedComplaint = complaintService.updateComplaintStatus(id, "RESOLVED");
-        
-        if (updatedComplaint.isPresent()) {
-            Complaint complaint = updatedComplaint.get();
-            complaint.setResolutionPhotoUrl(resolutionPhotoUrl);
-            complaint.setResolutionNote(resolutionNote);
-            complaintService.updateComplaint(complaint.getId(), complaint);
-            
-            Map<String, Object> response = new java.util.HashMap<>();
-            response.put("message", "Complaint marked as resolved");
-            response.put("complaint", complaint);
-            return ResponseEntity.ok(response);
-        } else {
-            Map<String, String> error = Map.of("error", "Complaint not found");
+        Optional<Complaint> existingComplaintOpt = complaintService.getComplaintById(id);
+        if (existingComplaintOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
+
+        Complaint complaint = existingComplaintOpt.get();
+
+        // Run Gemini Vision resolution verification
+        com.nagarseva.service.GeminiService.ResolutionVerificationResult verificationResult =
+                geminiService.verifyResolutionProof(complaint.getPhotoData(), resolutionPhotoUrl, complaint.getCategory(), resolutionNote);
+
+        complaint.setStatus(com.nagarseva.entity.ComplaintStatus.RESOLVED);
+        complaint.setResolvedAt(java.time.LocalDateTime.now());
+        complaint.setResolutionPhotoUrl(resolutionPhotoUrl);
+        complaint.setResolutionNote(resolutionNote);
+        complaint.setResolutionVerified(verificationResult.resolutionVerified());
+        complaint.setResolutionVerificationNote(verificationResult.resolutionVerificationNote());
+
+        complaintService.updateComplaint(complaint.getId(), complaint);
+        
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("message", "Complaint marked as resolved");
+        response.put("complaint", complaint);
+        response.put("verification", verificationResult);
+        return ResponseEntity.ok(response);
     }
 
     /**
