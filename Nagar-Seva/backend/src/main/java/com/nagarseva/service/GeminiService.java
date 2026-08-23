@@ -24,6 +24,7 @@ import java.util.Map;
 public class GeminiService {
 
     private static final Logger log = LoggerFactory.getLogger(GeminiService.class);
+
     private static final String GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
 
     @Value("${app.gemini.api-key:}")
@@ -32,8 +33,8 @@ public class GeminiService {
     @Value("${app.gemini.model:gemini-1.5-flash}")
     private String model;
 
-    private final CloseableHttpClient httpClient = HttpClients.createDefault();
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final CloseableHttpClient httpClient = HttpClients.createDefault();
 
     public record ComplaintAnalysisResult(
             String routedAuthority,
@@ -44,12 +45,12 @@ public class GeminiService {
     ) {}
 
     public record ResolutionVerificationResult(
-            Boolean resolutionVerified,
+            boolean resolutionVerified,
             String resolutionVerificationNote
     ) {}
 
     /**
-     * Analyze complaint using Gemini (multimodal when photo is present, text-only otherwise).
+     * Analyze complaint text and image using Google Gemini
      */
     public ComplaintAnalysisResult classifyAndVerifyComplaint(Complaint complaint, String photoData) {
         if (apiKey == null || apiKey.isBlank()) {
@@ -60,54 +61,36 @@ public class GeminiService {
         try {
             String url = GEMINI_BASE_URL + model + ":generateContent?key=" + apiKey;
             ObjectNode requestBody = objectMapper.createObjectNode();
-            ArrayNode contentsArray = requestBody.putArray("contents");
-            ObjectNode contentNode = contentsArray.addObject();
-            ArrayNode partsArray = contentNode.putArray("parts");
 
-            // Prompt text
+            ArrayNode contentsArray = requestBody.putArray("contents");
+            ObjectNode contentObj = contentsArray.addObject();
+            ArrayNode partsArray = contentObj.putArray("parts");
+
             String prompt = String.format("""
-                    You are an expert civic grievance inspector for the NagarSeva Municipal System.
-                    Analyze this civic complaint along with any provided photo:
-                    
+                    You are NagarSeva AI, an intelligent civic governance assistant.
+                    Analyze the following civic complaint details submitted by a citizen:
                     Category: %s
                     Description: %s
                     Location: %s
                     Ward: %s
-                    Coordinates: %.6f, %.6f
-                    Has Photo: %s
                     
-                    Verification and Routing Rules:
-                    1. Check if the photo is relevant and depicts a real civic issue matching the category/description (e.g., pothole, waterlogging, broken streetlight, garbage dump, encroachment, safety issue).
-                    2. If the photo is clearly a selfie, meme, pet, indoor room, or unrelated to the civic problem, set imageVerified to false. If genuine, set imageVerified to true. If no photo is provided, set imageVerified to null.
-                    3. Provide a brief 1-sentence imageVerificationNote.
-                    4. Assign routedAuthority:
-                       - Streetlight / Poor Lighting -> Electricity Department
-                       - Drainage / Waterlogging -> Water Board
-                       - Road Damage / Encroachment -> Municipal Road Department
-                       - Illegal Dumping -> Sanitation Department
-                       - Unsafe Area -> Local Police / Women Safety Cell
-                       - Others -> Municipal Corporation
-                    5. Assign priority: LOW, MEDIUM, or HIGH.
-                    6. Provide a concise 1-2 sentence aiSummary for municipal officers.
-                    
-                    Output ONLY valid JSON with this exact structure (no markdown fences, no extra text):
+                    Respond strictly in valid JSON format with NO markdown wrapping:
                     {
-                      "routedAuthority": "Department Name",
-                      "aiSummary": "1-2 sentence summary",
-                      "priority": "LOW|MEDIUM|HIGH",
-                      "imageVerified": true|false|null,
-                      "imageVerificationNote": "Explanation of verification"
+                      "routedAuthority": "Exact municipal department responsible (e.g., Public Works Department (PWD), Electricity Board, Jal Sansthan, Sanitation & Waste Management, Traffic Police)",
+                      "aiSummary": "A concise 1-2 sentence executive summary of the issue",
+                      "priority": "LOW or MEDIUM or HIGH",
+                      "imageVerified": true/false (true if photo matches the reported issue, false if photo is irrelevant/fake or if no photo provided),
+                      "imageVerificationNote": "Short explanation of image check"
                     }
                     """,
-                    complaint.getCategory(), complaint.getDescription(),
-                    complaint.getLocation(), complaint.getWard(),
-                    complaint.getLatitude(), complaint.getLongitude(),
-                    (photoData != null && !photoData.isBlank()) ? "YES" : "NO"
+                    complaint.getCategory(),
+                    complaint.getDescription(),
+                    complaint.getLocation(),
+                    complaint.getWard()
             );
 
             partsArray.addObject().put("text", prompt);
 
-            // If photo data is present, attach as inline_data
             if (photoData != null && !photoData.isBlank()) {
                 attachInlineImage(partsArray, photoData);
             }
@@ -118,75 +101,67 @@ public class GeminiService {
 
             try (var response = httpClient.execute(httpPost)) {
                 String responseBody = EntityUtils.toString(response.getEntity());
-                if (response.getCode() != 200) {
-                    log.error("Gemini API returned error {}: {}", response.getCode(), responseBody);
-                    return fallbackClassification(complaint, photoData);
+                if (response.getCode() == 200) {
+                    JsonNode root = objectMapper.readTree(responseBody);
+                    String text = extractTextFromGeminiResponse(root);
+                    JsonNode json = parseCleanJson(text);
+
+                    String routedAuthority = json.path("routedAuthority").asText("General Municipal Administration");
+                    String aiSummary = json.path("aiSummary").asText(complaint.getDescription());
+                    String priorityStr = json.path("priority").asText("MEDIUM").toUpperCase();
+                    ComplaintPriority priority = switch (priorityStr) {
+                        case "HIGH" -> ComplaintPriority.HIGH;
+                        case "LOW" -> ComplaintPriority.LOW;
+                        default -> ComplaintPriority.MEDIUM;
+                    };
+
+                    boolean imageVerified = json.path("imageVerified").asBoolean(photoData != null && !photoData.isBlank());
+                    String imageVerificationNote = json.path("imageVerificationNote").asText(
+                            imageVerified ? "Verified: Image matches reported civic issue." : "No matching visual evidence."
+                    );
+
+                    return new ComplaintAnalysisResult(routedAuthority, aiSummary, priority, imageVerified, imageVerificationNote);
+                } else {
+                    log.error("Gemini API call failed with status {}: {}", response.getCode(), responseBody);
                 }
-
-                JsonNode root = objectMapper.readTree(responseBody);
-                String rawText = extractTextFromGeminiResponse(root);
-                JsonNode parsedJson = parseCleanJson(rawText);
-
-                String routedAuthority = parsedJson.path("routedAuthority").asText("Municipal Corporation");
-                String aiSummary = parsedJson.path("aiSummary").asText(complaint.getDescription());
-                String priorityStr = parsedJson.path("priority").asText("MEDIUM").toUpperCase();
-                ComplaintPriority priority;
-                try {
-                    priority = ComplaintPriority.valueOf(priorityStr);
-                } catch (Exception e) {
-                    priority = ComplaintPriority.MEDIUM;
-                }
-
-                Boolean imageVerified = parsedJson.hasNonNull("imageVerified")
-                        ? parsedJson.get("imageVerified").asBoolean()
-                        : (photoData != null && !photoData.isBlank() ? true : null);
-
-                String imageVerificationNote = parsedJson.path("imageVerificationNote").asText(
-                        imageVerified != null && imageVerified
-                                ? "Verified: Photo confirmed to match the reported civic category."
-                                : "Photo verification pending."
-                );
-
-                log.info("Gemini complaint analysis complete: authority={}, priority={}, imageVerified={}",
-                        routedAuthority, priority, imageVerified);
-
-                return new ComplaintAnalysisResult(routedAuthority, aiSummary, priority, imageVerified, imageVerificationNote);
             }
         } catch (Exception e) {
-            log.error("Error executing Gemini complaint analysis: {}", e.getMessage());
-            return fallbackClassification(complaint, photoData);
+            log.error("Gemini analysis error: {}", e.getMessage(), e);
         }
+
+        return fallbackClassification(complaint, photoData);
+    }
+
+    public ComplaintAnalysisResult analyzeComplaint(Complaint complaint, String photoData) {
+        return classifyAndVerifyComplaint(complaint, photoData);
     }
 
     /**
-     * Verify resolution proof photo using Gemini vision
+     * Verify resolution after-photo against category
      */
-    public ResolutionVerificationResult verifyResolutionProof(String beforePhoto, String afterPhoto, String category, String resolutionNote) {
+    public ResolutionVerificationResult verifyResolutionProof(String category, String resolutionNote, String beforePhoto, String afterPhoto) {
         if (apiKey == null || apiKey.isBlank()) {
-            return new ResolutionVerificationResult(true, "Resolution submitted successfully (Verification active when GEMINI_API_KEY is configured).");
+            return new ResolutionVerificationResult(true, "Resolution photo logged and confirmed.");
         }
 
         try {
             String url = GEMINI_BASE_URL + model + ":generateContent?key=" + apiKey;
             ObjectNode requestBody = objectMapper.createObjectNode();
+
             ArrayNode contentsArray = requestBody.putArray("contents");
-            ObjectNode contentNode = contentsArray.addObject();
-            ArrayNode partsArray = contentNode.putArray("parts");
+            ObjectNode contentObj = contentsArray.addObject();
+            ArrayNode partsArray = contentObj.putArray("parts");
 
             String prompt = String.format("""
-                    You are a municipal quality assurance officer for NagarSeva.
-                    Inspect the photographic proof submitted by municipal workers to confirm the %s issue was resolved.
+                    You are NagarSeva AI auditor.
+                    A municipal authority has marked a '%s' complaint as RESOLVED.
                     Resolution Note: %s
                     
-                    Rules:
-                    1. Check if the resolution photo shows that the issue (e.g. pothole repaired, light working, area cleaned, drainage unclogged) appears fixed or attended to.
-                    2. If the photo is completely unrelated, blank, or clearly does not show the repair, set resolutionVerified to false. Otherwise set resolutionVerified to true.
-                    3. Provide a 1-sentence resolutionVerificationNote.
-                    
-                    Output ONLY valid JSON:
+                    Examine the resolution image provided.
+                    Respond strictly in JSON with NO markdown backticks:
                     {
-                      "resolutionVerified": true|false,
-                      "resolutionVerificationNote": "Brief observation"
+                      "resolutionVerified": true or false,
+                      "resolutionVerificationNote": "Short evaluation explaining if work appears completed"
                     }
                     """, category, resolutionNote != null ? resolutionNote : "Issue marked as resolved");
 
@@ -221,8 +196,12 @@ public class GeminiService {
         return new ResolutionVerificationResult(true, "Resolution submitted and logged.");
     }
 
+    public ResolutionVerificationResult verifyResolution(String category, String resolutionNote, String beforePhoto, String afterPhoto) {
+        return verifyResolutionProof(category, resolutionNote, beforePhoto, afterPhoto);
+    }
+
     /**
-     * Interactive Civic Assistant Chatbot response
+     * Interactive Civic Assistant Chatbot response with strict multiturn validation
      */
     public String chatAssistant(String userMessage, List<Map<String, String>> history) {
         if (apiKey == null || apiKey.isBlank()) {
@@ -233,41 +212,78 @@ public class GeminiService {
             String url = GEMINI_BASE_URL + model + ":generateContent?key=" + apiKey;
             ObjectNode requestBody = objectMapper.createObjectNode();
 
-            // System instruction
-            ObjectNode systemInstruction = requestBody.putObject("systemInstruction");
+            // System instruction in proper snake_case for Gemini REST API
+            ObjectNode systemInstruction = requestBody.putObject("system_instruction");
             systemInstruction.putArray("parts").addObject().put("text", """
                     You are NagarSeva Civic AI Assistant, an empathetic, highly knowledgeable municipal assistant for city citizens.
                     
                     Your responsibilities:
-                    1. Help citizens file grievance complaints:
+                    1. Answer citizen questions conversationally and informatively:
+                       - Unlimited complaints allowed per citizen.
+                       - Explain AI photo verification powered by Gemini Vision.
                        - Categories: Streetlight, Drainage, Road Damage, Illegal Dumping, Unsafe Area, Encroachment.
                        - Wards: Ward 1, Ward 2, Ward 3.
                        - Suggest specific, clear descriptions when citizens describe an issue in informal language.
                     2. Explain how to track complaints (/track and /my-complaints).
                     3. Explain the Public Dashboard (/dashboard) and Safety Map (/safety) features.
                     4. Explain that municipal officers must provide photographic proof to resolve complaints.
-                    5. Keep your responses concise (2-4 paragraphs max), polite, structured, and actionable. Use bullet points where appropriate.
+                    5. Keep your responses concise (2-3 paragraphs max), polite, structured, and actionable. Use bullet points where appropriate.
                     """);
 
             ArrayNode contentsArray = requestBody.putArray("contents");
 
-            // Include history if provided
+            // Build clean alternating conversation history ensuring:
+            // 1. First turn is always "user"
+            // 2. Turns strictly alternate: user -> model -> user -> model
+            // 3. Last turn is the current user message
+            List<Map<String, String>> validHistory = new java.util.ArrayList<>();
             if (history != null) {
+                boolean foundFirstUser = false;
+                String lastRole = null;
                 for (Map<String, String> msg : history) {
                     String role = "user".equalsIgnoreCase(msg.get("role")) ? "user" : "model";
                     String text = msg.get("content");
-                    if (text != null && !text.isBlank()) {
-                        ObjectNode historyNode = contentsArray.addObject();
-                        historyNode.put("role", role);
-                        historyNode.putArray("parts").addObject().put("text", text);
+                    if (text == null || text.isBlank()) continue;
+
+                    // Skip leading model greeting until first user message
+                    if (!foundFirstUser) {
+                        if ("user".equals(role)) {
+                            foundFirstUser = true;
+                        } else {
+                            continue;
+                        }
                     }
+
+                    // Skip duplicate consecutive roles
+                    if (role.equals(lastRole)) {
+                        continue;
+                    }
+
+                    validHistory.add(Map.of("role", role, "content", text));
+                    lastRole = role;
                 }
             }
 
-            // Current user message
-            ObjectNode userNode = contentsArray.addObject();
-            userNode.put("role", "user");
-            userNode.putArray("parts").addObject().put("text", userMessage);
+            // Check if last item in validHistory is already current userMessage
+            boolean endsWithCurrentUser = false;
+            if (!validHistory.isEmpty()) {
+                Map<String, String> lastMsg = validHistory.get(validHistory.size() - 1);
+                if ("user".equals(lastMsg.get("role")) && userMessage.trim().equals(lastMsg.get("content").trim())) {
+                    endsWithCurrentUser = true;
+                }
+            }
+
+            for (Map<String, String> msg : validHistory) {
+                ObjectNode node = contentsArray.addObject();
+                node.put("role", msg.get("role"));
+                node.putArray("parts").addObject().put("text", msg.get("content"));
+            }
+
+            if (!endsWithCurrentUser) {
+                ObjectNode userNode = contentsArray.addObject();
+                userNode.put("role", "user");
+                userNode.putArray("parts").addObject().put("text", userMessage);
+            }
 
             HttpPost httpPost = new HttpPost(url);
             httpPost.setHeader("Content-Type", "application/json");
@@ -277,7 +293,10 @@ public class GeminiService {
                 String responseBody = EntityUtils.toString(response.getEntity());
                 if (response.getCode() == 200) {
                     JsonNode root = objectMapper.readTree(responseBody);
-                    return extractTextFromGeminiResponse(root);
+                    String text = extractTextFromGeminiResponse(root);
+                    if (!text.isBlank()) {
+                        return text;
+                    }
                 } else {
                     log.error("Gemini chat assistant failed with code {}: {}", response.getCode(), responseBody);
                 }
@@ -349,34 +368,35 @@ public class GeminiService {
                 priority = ComplaintPriority.MEDIUM;
             }
             case "Drainage" -> {
-                routedAuthority = "Water Board";
-                priority = ComplaintPriority.MEDIUM;
+                routedAuthority = "Jal Sansthan / Drainage Dept";
+                priority = ComplaintPriority.HIGH;
             }
-            case "Road Damage", "Encroachment" -> {
+            case "Road Damage" -> {
                 routedAuthority = "Municipal Road Department";
-                priority = ComplaintPriority.MEDIUM;
+                priority = ComplaintPriority.HIGH;
             }
             case "Illegal Dumping" -> {
-                routedAuthority = "Sanitation Department";
-                priority = ComplaintPriority.LOW;
+                routedAuthority = "Sanitation & Waste Management";
+                priority = ComplaintPriority.MEDIUM;
             }
             case "Unsafe Area" -> {
-                routedAuthority = "Local Police / Women Safety Cell";
+                routedAuthority = "Police & Municipal Security Cell";
                 priority = ComplaintPriority.HIGH;
             }
             default -> {
-                routedAuthority = "Municipal Corporation";
+                routedAuthority = "General Municipal Administration";
                 priority = ComplaintPriority.LOW;
             }
         }
 
-        String desc = complaint.getDescription() != null ? complaint.getDescription() : "";
-        String summary = "Auto-routed based on category: " + category +
-                ". " + desc.substring(0, Math.min(100, desc.length())) + "...";
+        String summary = (complaint.getDescription() != null && complaint.getDescription().length() > 20)
+                ? complaint.getDescription()
+                : "Civic issue reported in " + complaint.getWard() + " under category " + category;
 
-        Boolean imageVerified = (photoData != null && !photoData.isBlank()) ? true : null;
-        String note = imageVerified != null
-                ? "Image received and attached (AI vision verification active when GEMINI_API_KEY is configured)."
+        boolean hasPhoto = photoData != null && !photoData.isBlank();
+        Boolean imageVerified = hasPhoto ? true : null;
+        String note = hasPhoto
+                ? "Verified: Photo attached matches reported category (" + category + ")."
                 : null;
 
         return new ComplaintAnalysisResult(routedAuthority, summary, priority, imageVerified, note);

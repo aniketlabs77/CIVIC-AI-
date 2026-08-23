@@ -44,8 +44,8 @@ export default function AiAssistant() {
     setLoading(true);
 
     try {
-      const historyPayload = updatedMessages
-        .slice(-6)
+      const historyPayload = messages
+        .slice(-5)
         .map(m => ({ role: m.role, content: m.content }));
 
       const response = await apiClient.post('/api/ai/chat', {
