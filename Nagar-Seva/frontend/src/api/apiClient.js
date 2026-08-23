@@ -26,7 +26,7 @@ apiClient.interceptors.request.use(async (config) => {
     }
   }
 
-  // Fallback for local demo mode without Firebase
+  // Fallback for local demo mode or default guest citizen
   try {
     const localUserJson = localStorage.getItem('nagarseva_demo_user');
     if (localUserJson) {
@@ -35,9 +35,11 @@ apiClient.interceptors.request.use(async (config) => {
       const email = localUser.email || (role === 'ADMIN' ? 'admin@nagarseva.com' : 'citizen@nagarseva.com');
       const uid = localUser.uid || ('demo-' + role.toLowerCase() + '-1');
       config.headers['Authorization'] = `Bearer demo-token:${role}:${email}:${uid}`;
+    } else {
+      config.headers['Authorization'] = `Bearer demo-token:CITIZEN:citizen@nagarseva.com:demo-citizen-1`;
     }
   } catch (e) {
-    console.warn('Local demo token header notice:', e);
+    config.headers['Authorization'] = `Bearer demo-token:CITIZEN:citizen@nagarseva.com:demo-citizen-1`;
   }
 
   return config;

@@ -37,6 +37,7 @@ public class User {
     private LocalDateTime lastLoginAt;
 
     @OneToMany(mappedBy = "citizen", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Set<Complaint> complaints;
 
     public User() {

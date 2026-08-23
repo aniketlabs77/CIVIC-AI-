@@ -22,7 +22,7 @@ const reportPinIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
-// Common landmarks for instant autocomplete & lookup
+// Common landmarks for instant offline lookup
 const COMMON_LANDMARKS = [
   { name: 'G.L. Bajaj Institute of Technology and Management', subtitle: 'Knowledge Park II, Greater Noida', lat: 28.4727, lng: 77.4895, ward: 'Ward 3', aliases: ['gl bajaj', 'g.l. bajaj', 'knowledge park'] },
   { name: 'Krishna City', subtitle: 'Lal Kuan, GT Road, Ghaziabad', lat: 28.6322, lng: 77.4642, ward: 'Ward 2', aliases: ['krishna city', 'krishna city lal kuan'] },
@@ -83,6 +83,7 @@ export default function ReportIssue() {
   const [photoPreview, setPhotoPreview] = useState('');
   const [loading, setLoading] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [aiRefining, setAiRefining] = useState(false);
   const [aiRefinedSuccess, setAiRefinedSuccess] = useState(false);
   const [message, setMessage] = useState('');
@@ -93,6 +94,7 @@ export default function ReportIssue() {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchContainerRef = useRef(null);
+  const debounceTimerRef = useRef(null);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -179,21 +181,71 @@ export default function ReportIssue() {
     setSearchQuery(placeName);
   };
 
-  // Handle landmark autocomplete typing
+  // Handle landmark autocomplete typing + live geocoding search
   const handleSearchChange = (e) => {
     const val = e.target.value;
     setSearchQuery(val);
     setFormData(prev => ({ ...prev, location: val }));
 
-    if (val.trim().length > 1) {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    if (val.trim().length > 0) {
       const q = val.toLowerCase();
-      const filtered = COMMON_LANDMARKS.filter(lm => 
+      const localMatches = COMMON_LANDMARKS.filter(lm => 
         lm.name.toLowerCase().includes(q) ||
         (lm.subtitle && lm.subtitle.toLowerCase().includes(q)) ||
         (lm.aliases && lm.aliases.some(a => a.includes(q)))
       );
-      setSuggestions(filtered);
+      setSuggestions(localMatches);
       setShowSuggestions(true);
+
+      // Debounced live geocoding fetch for any address/city
+      debounceTimerRef.current = setTimeout(async () => {
+        try {
+          setSearchLoading(true);
+          const resp = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&limit=6&addressdetails=1&countrycodes=in`,
+            { headers: { 'User-Agent': 'NagarSeva-App/1.0' } }
+          );
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data && data.length > 0) {
+              const remoteMatches = data.map(item => {
+                const parts = item.display_name.split(',');
+                const title = parts[0];
+                const subtitle = parts.slice(1, 4).join(',').trim();
+                const lat = parseFloat(item.lat);
+                const lng = parseFloat(item.lon);
+                return {
+                  name: title,
+                  subtitle: subtitle || item.display_name,
+                  lat: lat,
+                  lng: lng,
+                  ward: deduceWard(lat, lng)
+                };
+              });
+
+              // Combine unique matches
+              setSuggestions(prev => {
+                const combined = [...localMatches];
+                remoteMatches.forEach(rm => {
+                  if (!combined.some(c => Math.abs(c.lat - rm.lat) < 0.001 && Math.abs(c.lng - rm.lng) < 0.001)) {
+                    combined.push(rm);
+                  }
+                });
+                return combined.slice(0, 8);
+              });
+              setShowSuggestions(true);
+            }
+          }
+        } catch (e) {
+          console.warn('Geocoding search error:', e);
+        } finally {
+          setSearchLoading(false);
+        }
+      }, 300);
     } else {
       setSuggestions([]);
       setShowSuggestions(false);
@@ -201,9 +253,10 @@ export default function ReportIssue() {
   };
 
   const handleSelectLandmark = (lm) => {
+    const fullLoc = lm.name + (lm.subtitle ? `, ${lm.subtitle}` : '');
     setFormData(prev => ({
       ...prev,
-      location: lm.name + (lm.subtitle ? `, ${lm.subtitle}` : ''),
+      location: fullLoc,
       ward: lm.ward || deduceWard(lm.lat, lm.lng),
       latitude: lm.lat,
       longitude: lm.lng
@@ -353,7 +406,7 @@ export default function ReportIssue() {
           setMessage('❌ Error submitting complaint. Please check the fields and try again.');
         }
       } else {
-        setMessage('❌ Connection error. Please make sure the backend is active and try again.');
+        setMessage('❌ Could not connect to backend. Please ensure the backend server is running on port 8080.');
       }
     } finally {
       setLoading(false);
@@ -519,16 +572,27 @@ export default function ReportIssue() {
             <div className="relative" ref={searchContainerRef}>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+                    {searchLoading ? '⏳' : '🔍'}
+                  </span>
                   <input
                     type="text"
                     required
                     value={searchQuery}
                     onChange={handleSearchChange}
                     onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
-                    placeholder="Search place, landmark, or street (e.g., G.L. Bajaj, Krishna City, Connaught Place)..."
+                    placeholder="Search place, landmark, or street (e.g., G.L. Bajaj, Krishna City, Connaught Place, Sector 15)..."
                     className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500"
                   />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => { setSearchQuery(''); setFormData(p => ({ ...p, location: '' })); setSuggestions([]); }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-600"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
 
                 <div className="w-36">
@@ -556,12 +620,15 @@ export default function ReportIssue() {
                       className="w-full text-left px-4 py-2.5 hover:bg-violet-50/80 transition flex items-start gap-2.5"
                     >
                       <span className="text-base text-violet-600 mt-0.5">📍</span>
-                      <div>
-                        <div className="text-xs font-bold text-gray-900">{lm.name}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold text-gray-900 truncate">{lm.name}</div>
                         {lm.subtitle && (
-                          <div className="text-[11px] text-gray-500">{lm.subtitle}</div>
+                          <div className="text-[11px] text-gray-500 truncate">{lm.subtitle}</div>
                         )}
                       </div>
+                      <span className="text-[10px] bg-violet-100 text-violet-700 px-2 py-0.5 rounded-md font-bold shrink-0">
+                        {lm.ward}
+                      </span>
                     </button>
                   ))}
                 </div>
