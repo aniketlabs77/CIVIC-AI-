@@ -18,6 +18,8 @@ public class AiAssistantController {
     public record ChatRequest(String message, List<Map<String, String>> history) {}
     public record ChatResponse(String reply) {}
 
+    public record RefineGrievanceRequest(String input, String category) {}
+
     /**
      * POST /api/ai/chat - Civic AI Assistant chatbot endpoint
      */
@@ -29,5 +31,18 @@ public class AiAssistantController {
 
         String reply = geminiService.chatAssistant(request.message(), request.history());
         return ResponseEntity.ok(new ChatResponse(reply));
+    }
+
+    /**
+     * POST /api/ai/refine-grievance - AI-assisted grievance drafting & optimization
+     */
+    @PostMapping("/refine-grievance")
+    public ResponseEntity<?> refineGrievance(@RequestBody RefineGrievanceRequest request) {
+        if (request.input() == null || request.input().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Input cannot be empty"));
+        }
+
+        Map<String, Object> refined = geminiService.refineGrievance(request.input(), request.category());
+        return ResponseEntity.ok(refined);
     }
 }

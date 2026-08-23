@@ -538,4 +538,113 @@ public class GeminiService {
                 "- To calculate safer road navigation paths, use the **[Safety Map](/safety)**.\n\n" +
                 "Feel free to ask me to draft a complaint, explain how image verification works, or check resolution timelines!";
     }
+
+    /**
+     * AI-Powered Grievance Drafting & Refinement
+     */
+    public Map<String, Object> refineGrievance(String rawInput, String currentCategory) {
+        if (rawInput == null || rawInput.isBlank()) {
+            return Map.of(
+                    "category", currentCategory != null && !currentCategory.isBlank() ? currentCategory : "Road Damage",
+                    "refinedDescription", "Please provide a brief description of the civic problem you observed.",
+                    "suggestedWard", "Ward 1",
+                    "priority", "MEDIUM"
+            );
+        }
+
+        if (apiKey == null || apiKey.isBlank()) {
+            return fallbackRefineGrievance(rawInput, currentCategory);
+        }
+
+        try {
+            String url = GEMINI_BASE_URL + model + ":generateContent?key=" + apiKey;
+            ObjectNode requestBody = objectMapper.createObjectNode();
+
+            ObjectNode systemInstruction = requestBody.putObject("system_instruction");
+            systemInstruction.putArray("parts").addObject().put("text", """
+                    You are NagarSeva AI, an expert municipal grievance drafting assistant.
+                    Given a citizen's informal, rough, or incomplete input about a civic problem, produce a clear, professional, well-structured municipal grievance report.
+                    
+                    Available Categories: Streetlight, Road Damage, Drainage, Illegal Dumping, Unsafe Area, Encroachment.
+                    Available Wards: Ward 1, Ward 2, Ward 3.
+                    
+                    Respond strictly in valid JSON format with NO markdown wrapper:
+                    {
+                      "category": "One of the 6 valid categories",
+                      "refinedDescription": "A polished, formal 2-3 sentence complaint describing the issue, public impact/hazard, and requested municipal remedy",
+                      "suggestedWard": "Ward 1 or Ward 2 or Ward 3",
+                      "priority": "HIGH or MEDIUM or LOW"
+                    }
+                    """);
+
+            ArrayNode contentsArray = requestBody.putArray("contents");
+            ObjectNode userNode = contentsArray.addObject();
+            userNode.put("role", "user");
+            userNode.putArray("parts").addObject().put("text", "Citizen input: " + rawInput + (currentCategory != null ? " (Selected category: " + currentCategory + ")" : ""));
+
+            HttpPost httpPost = new HttpPost(url);
+            httpPost.setHeader("Content-Type", "application/json");
+            httpPost.setEntity(new StringEntity(objectMapper.writeValueAsString(requestBody), ContentType.APPLICATION_JSON));
+
+            try (var response = httpClient.execute(httpPost)) {
+                String responseBody = EntityUtils.toString(response.getEntity());
+                if (response.getCode() == 200) {
+                    JsonNode root = objectMapper.readTree(responseBody);
+                    String text = extractTextFromGeminiResponse(root);
+                    JsonNode json = parseCleanJson(text);
+
+                    String category = json.path("category").asText(currentCategory != null && !currentCategory.isBlank() ? currentCategory : "Road Damage");
+                    String refinedDescription = json.path("refinedDescription").asText(rawInput);
+                    String suggestedWard = json.path("suggestedWard").asText("Ward 1");
+                    String priority = json.path("priority").asText("MEDIUM");
+
+                    Map<String, Object> result = new java.util.HashMap<>();
+                    result.put("category", category);
+                    result.put("refinedDescription", refinedDescription);
+                    result.put("suggestedWard", suggestedWard);
+                    result.put("priority", priority);
+                    return result;
+                }
+            }
+        } catch (Exception e) {
+            log.error("Gemini grievance refinement failed: {}", e.getMessage());
+        }
+
+        return fallbackRefineGrievance(rawInput, currentCategory);
+    }
+
+    private Map<String, Object> fallbackRefineGrievance(String rawInput, String currentCategory) {
+        String lower = rawInput.toLowerCase();
+        String category = currentCategory != null && !currentCategory.isBlank() ? currentCategory : "Road Damage";
+        String priority = "MEDIUM";
+
+        if (lower.contains("pothole") || lower.contains("road") || lower.contains("crack") || lower.contains("asphalt")) {
+            category = "Road Damage";
+            priority = "HIGH";
+        } else if (lower.contains("light") || lower.contains("dark") || lower.contains("bulb") || lower.contains("lamp") || lower.contains("pole")) {
+            category = "Streetlight";
+            priority = "MEDIUM";
+        } else if (lower.contains("water") || lower.contains("drain") || lower.contains("sewer") || lower.contains("leak") || lower.contains("pipe")) {
+            category = "Drainage";
+            priority = "HIGH";
+        } else if (lower.contains("garbage") || lower.contains("dump") || lower.contains("trash") || lower.contains("waste")) {
+            category = "Illegal Dumping";
+            priority = "MEDIUM";
+        } else if (lower.contains("unsafe") || lower.contains("crime") || lower.contains("safety") || lower.contains("harass")) {
+            category = "Unsafe Area";
+            priority = "HIGH";
+        } else if (lower.contains("encroach") || lower.contains("stall") || lower.contains("block")) {
+            category = "Encroachment";
+            priority = "MEDIUM";
+        }
+
+        String refined = "Urgent civic redressal required: " + rawInput.trim() + ". This condition is causing significant public inconvenience and safety hazards to local residents and commuters. Prompt inspection and repair action by the concerned municipal authority is requested.";
+
+        Map<String, Object> res = new java.util.HashMap<>();
+        res.put("category", category);
+        res.put("refinedDescription", refined);
+        res.put("suggestedWard", "Ward 1");
+        res.put("priority", priority);
+        return res;
+    }
 }

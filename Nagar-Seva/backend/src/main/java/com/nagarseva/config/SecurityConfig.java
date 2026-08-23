@@ -42,7 +42,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Allow CORS pre-flight requests
                 .requestMatchers(antMatcher(HttpMethod.OPTIONS, "/**")).permitAll()
-                // Public GET endpoints
+                // Public GET & AI endpoints
                 .requestMatchers(antMatcher(HttpMethod.GET, "/api/dashboard/**")).permitAll()
                 .requestMatchers(antMatcher("/api/safety/**")).permitAll()
                 .requestMatchers(antMatcher(HttpMethod.GET, "/api/complaints")).permitAll()
@@ -50,10 +50,11 @@ public class SecurityConfig {
                 // Actuator & H2 console & AI assistant
                 .requestMatchers(antMatcher("/actuator/**")).permitAll()
                 .requestMatchers(antMatcher("/h2-console/**")).permitAll()
-                .requestMatchers(antMatcher(HttpMethod.POST, "/api/ai/chat")).permitAll()
+                .requestMatchers(antMatcher("/api/ai/**")).permitAll()
                 // Admin endpoints - require ROLE_ADMIN
                 .requestMatchers(antMatcher("/api/admin/**")).hasRole("ADMIN")
                 // Citizen complaint actions & my complaints - require authentication
+                .requestMatchers(antMatcher(HttpMethod.POST, "/api/complaints")).authenticated()
                 .requestMatchers(antMatcher("/api/complaints/my")).authenticated()
                 .requestMatchers(antMatcher("/api/complaints/**")).authenticated()
                 .requestMatchers(antMatcher("/api/auth/**")).authenticated()
