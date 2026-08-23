@@ -34,12 +34,13 @@ apiClient.interceptors.request.use(async (config) => {
       const role = localUser.role || 'CITIZEN';
       const email = localUser.email || (role === 'ADMIN' ? 'admin@nagarseva.com' : 'citizen@nagarseva.com');
       const uid = localUser.uid || ('demo-' + role.toLowerCase() + '-1');
-      config.headers['Authorization'] = `Bearer demo-token:${role}:${email}:${uid}`;
+      const dept = localUser.department || '';
+      config.headers['Authorization'] = `Bearer demo-token:${role}:${email}:${uid}:${dept}`;
     } else {
-      config.headers['Authorization'] = `Bearer demo-token:CITIZEN:citizen@nagarseva.com:demo-citizen-1`;
+      config.headers['Authorization'] = `Bearer demo-token:CITIZEN:citizen@nagarseva.com:demo-citizen-1:`;
     }
   } catch (e) {
-    config.headers['Authorization'] = `Bearer demo-token:CITIZEN:citizen@nagarseva.com:demo-citizen-1`;
+    config.headers['Authorization'] = `Bearer demo-token:CITIZEN:citizen@nagarseva.com:demo-citizen-1:`;
   }
 
   return config;

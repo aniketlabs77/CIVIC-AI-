@@ -44,15 +44,19 @@ public class FirebaseAuthFilter extends OncePerRequestFilter {
                 // 1. Support local demo development token (zero Firebase credentials required)
                 if (token.startsWith("demo-token:")) {
                     try {
-                        String[] parts = token.split(":", 4);
+                        String[] parts = token.split(":", 5);
                         String roleStr = parts.length > 1 ? parts[1] : "CITIZEN";
                         String email = parts.length > 2 ? parts[2] : "citizen@nagarseva.com";
                         String uid = parts.length > 3 ? parts[3] : "demo-uid-1";
+                        String department = parts.length > 4 ? parts[4] : null;
 
                         UserRole role = "ADMIN".equalsIgnoreCase(roleStr) ? UserRole.ADMIN : UserRole.CITIZEN;
                         User user = userService.findOrCreateByFirebaseUid(uid, email);
                         if (user.getRole() != role) {
                             user.setRole(role);
+                        }
+                        if (department != null && !department.isBlank()) {
+                            user.setDepartment(department);
                         }
 
                         List<GrantedAuthority> authorities = List.of(

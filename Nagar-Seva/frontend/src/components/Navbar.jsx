@@ -77,7 +77,7 @@ export default function Navbar() {
             <div className="flex items-center gap-2">
               {/* User Profile Pill */}
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
-                <span className="text-xs font-semibold text-gray-800 truncate max-w-[120px]">
+                <span className="text-xs font-semibold text-gray-800 truncate max-w-[130px]">
                   {user?.name || user?.email || 'User'}
                 </span>
                 <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider ${
@@ -85,7 +85,9 @@ export default function Navbar() {
                     ? 'bg-red-50 text-red-700 border border-red-100'
                     : 'bg-[#f0ecff] text-[#7c5cff] border border-[#e4dcff]'
                 }`}>
-                  {user?.role || 'CITIZEN'}
+                  {user?.role === 'ADMIN' && user?.department
+                    ? user.department.split(' ')[0]
+                    : user?.role || 'CITIZEN'}
                 </span>
               </div>
 
