@@ -30,7 +30,7 @@ public class GeminiService {
     @Value("${app.gemini.api-key:}")
     private String apiKey;
 
-    @Value("${app.gemini.model:gemini-1.5-flash}")
+    @Value("${app.gemini.model:gemini-3.6-flash}")
     private String model;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
