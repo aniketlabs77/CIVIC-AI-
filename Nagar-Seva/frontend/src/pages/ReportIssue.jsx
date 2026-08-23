@@ -401,10 +401,14 @@ export default function ReportIssue() {
         const errors = error.response.data;
         if (typeof errors === 'object') {
           const errorMessages = Object.values(errors).join(', ');
-          setMessage(`❌ ${errorMessages}`);
+          setMessage(`❌ ${errorMessages || 'Server validation error'}`);
+        } else if (typeof errors === 'string') {
+          setMessage(`❌ ${errors}`);
         } else {
-          setMessage('❌ Error submitting complaint. Please check the fields and try again.');
+          setMessage(`❌ Error (${error.response.status}): Failed to submit complaint.`);
         }
+      } else if (error.message) {
+        setMessage(`❌ Connection error: ${error.message}. Please verify the backend server is running on port 8080.`);
       } else {
         setMessage('❌ Could not connect to backend. Please ensure the backend server is running on port 8080.');
       }
