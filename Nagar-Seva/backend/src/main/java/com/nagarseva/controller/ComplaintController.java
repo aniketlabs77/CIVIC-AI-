@@ -44,10 +44,15 @@ public class ComplaintController {
         if (authentication == null || !(authentication.getPrincipal() instanceof User user)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
         Long userId = user.getId();
+        String userEmail = user.getEmail();
         List<Complaint> allComplaints = complaintService.getAllComplaints();
         List<Complaint> myComplaints = allComplaints.stream()
-                .filter(c -> c.getCitizen() != null && c.getCitizen().getId().equals(userId))
+                .filter(c -> c.getCitizen() != null && (
+                        (userId != null && userId.equals(c.getCitizen().getId())) ||
+                        (userEmail != null && userEmail.equalsIgnoreCase(c.getCitizen().getEmail()))
+                ))
                 .collect(java.util.stream.Collectors.toList());
         return ResponseEntity.ok(myComplaints);
     }

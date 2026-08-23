@@ -383,31 +383,104 @@ public class GeminiService {
     }
 
     private String generateFallbackChatResponse(String query) {
-        String lower = query.toLowerCase();
-        if (lower.contains("report") || lower.contains("pothole") || lower.contains("broken") || lower.contains("garbage") || lower.contains("light") || lower.contains("drain")) {
-            return "👋 **How to report an issue on NagarSeva:**\n\n" +
-                    "1. Click on **'Report Issue'** in the navigation bar (or visit `/report`).\n" +
-                    "2. Select the category (e.g. *Road Damage*, *Streetlight*, *Drainage*, *Illegal Dumping*, or *Unsafe Area*).\n" +
-                    "3. Provide a clear description and location address (or click **'📍 Use My Current Location'**).\n" +
-                    "4. Optionally upload a photo for **AI Image Verification**.\n" +
-                    "5. Submit! Your grievance is automatically routed to the right municipal authority.";
-        } else if (lower.contains("track") || lower.contains("status")) {
-            return "🔍 **Tracking your grievance:**\n\n" +
-                    "- Go to **'My Complaints'** (`/my-complaints`) to view all your reported issues.\n" +
-                    "- Go to **'Track All'** (`/track`) to browse complaints reported across the city.\n" +
-                    "- Issues transition from **OPEN** ➡️ **IN_PROGRESS** ➡️ **RESOLVED** with photo proof.";
-        } else if (lower.contains("safety") || lower.contains("map") || lower.contains("route")) {
-            return "🛡️ **Safety Map & Route Checker:**\n\n" +
-                    "- Visit the **Safety Map** (`/safety`) to see a real-time safety heatmap based on verified civic reports.\n" +
-                    "- Use the **Route Safety Checker** before traveling to find safer paths.";
-        } else {
-            return "👋 Hello! I am your **NagarSeva Civic AI Assistant**.\n\n" +
-                    "I can help you with:\n" +
-                    "- 📝 **Drafting complaints** (potholes, garbage, streetlights, drainage)\n" +
-                    "- 🔍 **Tracking grievances** and ward resolution rates\n" +
-                    "- 🗺️ **Checking route safety** on our live Safety Map\n" +
-                    "- 🏢 **Connecting with municipal authorities**\n\n" +
-                    "How can I assist you today?";
+        String lower = query.toLowerCase().trim();
+
+        // 1. Pothole & Road Damage Queries
+        if (lower.contains("pothole") || lower.contains("road") || lower.contains("asphalt") || lower.contains("pavement") || lower.contains("crater")) {
+            return "🛣️ **Draft Complaint: Road Damage & Pothole**\n\n" +
+                    "Here is a recommended format to submit on the **[Report Issue](/report)** page:\n\n" +
+                    "- **Category:** `Road Damage`\n" +
+                    "- **Priority:** `HIGH`\n" +
+                    "- **Suggested Title:** Dangerous pothole causing traffic slowdown & hazard\n" +
+                    "- **Description:** *\"A large, hazardous pothole on the main carriageway needs urgent asphalt resurfacing to prevent accidents.\"*\n" +
+                    "- **Routed Department:** `PWD / Road Maintenance Department`\n\n" +
+                    "💡 *Tip: Attach a clear daytime photo of the damaged section to enable AI auto-verification!*";
         }
+
+        // 2. Streetlight & Dark Spot Queries
+        if (lower.contains("streetlight") || lower.contains("light") || lower.contains("dark") || lower.contains("lamp") || lower.contains("unlit") || lower.contains("pole")) {
+            return "💡 **Draft Complaint: Streetlight Outage**\n\n" +
+                    "Here is a recommended format to submit on the **[Report Issue](/report)** page:\n\n" +
+                    "- **Category:** `Streetlight`\n" +
+                    "- **Priority:** `MEDIUM`\n" +
+                    "- **Suggested Title:** Streetlight non-functional, creating dark zone\n" +
+                    "- **Description:** *\"The streetlights along this stretch have been completely unlit for multiple nights, causing pedestrian safety hazards.\"*\n" +
+                    "- **Routed Department:** `Electricity Department / Urban Lighting Cell`\n\n" +
+                    "🛡️ *Note: Unlit streetlight reports immediately mark safety risk areas on our live **[Safety Map](/safety)**!*";
+        }
+
+        // 3. Garbage, Solid Waste & Dumping Queries
+        if (lower.contains("garbage") || lower.contains("dump") || lower.contains("trash") || lower.contains("waste") || lower.contains("litter") || lower.contains("sanitation")) {
+            return "🗑️ **Draft Complaint: Illegal Garbage Dumping**\n\n" +
+                    "Here is a recommended format to submit on the **[Report Issue](/report)** page:\n\n" +
+                    "- **Category:** `Illegal Dumping`\n" +
+                    "- **Priority:** `MEDIUM`\n" +
+                    "- **Suggested Title:** Unattended solid waste overflow\n" +
+                    "- **Description:** *\"Accumulated garbage and solid waste on the roadside creating foul smell and unhygienic conditions. Immediate clearing and sanitization required.\"*\n" +
+                    "- **Routed Department:** `Sanitation & Waste Management Department`";
+        }
+
+        // 4. Drainage, Water Logging & Sewage Queries
+        if (lower.contains("drain") || lower.contains("water") || lower.contains("sewer") || lower.contains("leak") || lower.contains("flood") || lower.contains("manhole")) {
+            return "🚰 **Draft Complaint: Drainage / Water Logging Issue**\n\n" +
+                    "Here is a recommended format to submit on the **[Report Issue](/report)** page:\n\n" +
+                    "- **Category:** `Drainage`\n" +
+                    "- **Priority:** `HIGH`\n" +
+                    "- **Suggested Title:** Blocked municipal drain causing water accumulation\n" +
+                    "- **Description:** *\"Heavy blockage in the drainage line resulting in stagnant water overflow. Risk of mosquito breeding and structural road damage.\"*\n" +
+                    "- **Routed Department:** `Jal Sansthan & Water Works Authority`";
+        }
+
+        // 5. Safety, Crime & Unsafe Areas
+        if (lower.contains("safe") || lower.contains("crime") || lower.contains("unsafe") || lower.contains("harass") || lower.contains("security") || lower.contains("patrol")) {
+            return "🛡️ **Safety Alert & Area Flagging**\n\n" +
+                    "You can flag vulnerable spots to the Municipal Authorities & Local Patrols:\n\n" +
+                    "1. Report with category **'Unsafe Area'** on the **[Report Issue](/report)** page.\n" +
+                    "2. Check the **[Safety Map](/safety)** to view real-time risk heatmaps calculated from unlit streetlights and active grievances.\n" +
+                    "3. Use the **Safe Route Navigator** to compute well-lit, lower-risk travel routes.";
+        }
+
+        // 6. Escalation & SLA Queries
+        if (lower.contains("escalat") || lower.contains("sla") || lower.contains("delay") || lower.contains("time") || lower.contains("hour") || lower.contains("minute")) {
+            return "⏳ **NagarSeva Automated Escalation System**\n\n" +
+                    "- **Demo SLA Window:** Issues unresolved after **5 minutes** (representing standard 48-hour municipal SLA) are automatically marked as **`ESCALATED`**.\n" +
+                    "- **Executive Alert:** Escalated tickets are highlighted directly on the **[Admin Portal](/admin)** and elevated to Zonal Officers.\n" +
+                    "- **Citizen Tracking:** Citizens receive visual status badges in **[My Complaints](/my-complaints)** showing escalation urgency.";
+        }
+
+        // 7. Tracking & Status Queries
+        if (lower.contains("track") || lower.contains("status") || lower.contains("progress") || lower.contains("check")) {
+            return "🔍 **How to Track Your Grievances:**\n\n" +
+                    "- **Personal Dashboard:** Visit **[My Complaints](/my-complaints)** to inspect all tickets filed by your account.\n" +
+                    "- **Public Registry:** Visit **[Track All Complaints](/track)** to view real-time civic issues across all wards.\n" +
+                    "- **Status Lifecycle:** `OPEN` ➡️ `IN_PROGRESS` ➡️ `RESOLVED` (with mandatory photographic evidence).";
+        }
+
+        // 8. Admin & Municipal Resolution Queries
+        if (lower.contains("admin") || lower.contains("resolve") || lower.contains("photo") || lower.contains("officer") || lower.contains("authority")) {
+            return "🏢 **Municipal Resolution & Verification Standards:**\n\n" +
+                    "- **Mandatory Photo Proof:** Field workers must upload an **'After Resolution' photo** before any ticket can be closed.\n" +
+                    "- **AI Verification:** The AI system cross-references the before and after photos to confirm the defect has truly been fixed.\n" +
+                    "- **Transparency:** Citizens can inspect the repair proof directly on their ticket card.";
+        }
+
+        // 9. Greeting / General Queries
+        if (lower.contains("hello") || lower.contains("hi") || lower.contains("hey") || lower.contains("help") || lower.length() < 5) {
+            return "👋 **Hello! I am your NagarSeva Civic AI Assistant.**\n\n" +
+                    "I can assist you with:\n" +
+                    "- 📝 **Drafting complaints** (potholes, garbage, unlit streetlights, drainage)\n" +
+                    "- 🔍 **Tracking ticket status** and municipal escalation\n" +
+                    "- 🗺️ **Finding safe travel routes** on the live Safety Map\n" +
+                    "- 🏢 **Understanding ward responsibilities**\n\n" +
+                    "What issue would you like assistance with today?";
+        }
+
+        // 10. Default Smart Civic Response
+        return "🏛️ **NagarSeva Civic Intelligence Assistance**\n\n" +
+                "Regarding your inquiry about *\"" + query + "\"*:\n\n" +
+                "- To register this grievance with the municipality, please visit the **[Report Issue](/report)** page.\n" +
+                "- To check existing complaints or ward performance, see our **[Public Dashboard](/dashboard)**.\n" +
+                "- For immediate night safety routing, explore our **[Safety Map](/safety)**.\n\n" +
+                "Need help drafting a specific complaint? Just ask me *'Help me draft a pothole complaint'* or *'Streetlight broken'*.";
     }
 }
