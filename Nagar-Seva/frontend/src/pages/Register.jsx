@@ -13,7 +13,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { syncUserProfile, fetchUserProfile } = useAuth();
+  const { syncUserProfile, fetchUserProfile, loginLocalDemo } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,7 +42,6 @@ export default function Register() {
         }
       }
 
-      // Sync role selection to backend database
       try {
         await syncUserProfile({
           name: name.trim() || (selectedRole === 'ADMIN' ? 'Admin Officer' : 'Citizen User'),
@@ -52,7 +51,6 @@ export default function Register() {
         console.warn('Profile sync notice:', syncErr);
       }
 
-      // Fetch combined profile and navigate to appropriate view
       const userProfile = await fetchUserProfile(userCredential.user);
       if (selectedRole === 'ADMIN' || (userProfile && userProfile.role === 'ADMIN')) {
         navigate('/admin');
@@ -60,6 +58,19 @@ export default function Register() {
         navigate('/my-complaints');
       }
     } catch (err) {
+      console.warn('Firebase register notice:', err);
+
+      // Graceful fallback for local development if Firebase API key is not configured
+      if (err.code === 'auth/api-key-not-valid' || err.code === 'auth/invalid-api-key' || err.message?.includes('api-key-not-valid')) {
+        loginLocalDemo(selectedRole, email.trim(), name.trim() || (selectedRole === 'ADMIN' ? 'Admin Officer' : 'Citizen User'));
+        if (selectedRole === 'ADMIN') {
+          navigate('/admin');
+        } else {
+          navigate('/my-complaints');
+        }
+        return;
+      }
+
       let msg = 'Registration failed. Please try again.';
       if (err.code === 'auth/email-already-in-use') {
         msg = 'This email is already registered. Please sign in instead.';
@@ -223,7 +234,7 @@ export default function Register() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-full bg-dark hover:bg-dark-hover text-white text-xs sm:text-sm font-bold shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 rounded-full bg-dark hover:bg-dark-hover text-white text-xs sm:text-sm font-bold shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {loading ? (
                   <>
