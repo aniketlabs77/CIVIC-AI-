@@ -44,14 +44,14 @@ export default function AiAssistant() {
     setLoading(true);
 
     try {
-      const historyPayload = updatedMessages
-        .slice(-6)
+      const historyPayload = messages
+        .slice(-5)
         .map(m => ({ role: m.role, content: m.content }));
 
       const response = await apiClient.post('/api/ai/chat', {
         message: query,
         history: historyPayload
-      });
+      }, { timeout: 45000 });
 
       const replyText = response.data?.reply || "I'm here to help. Could you please rephrase that?";
       setMessages(prev => [...prev, { role: 'assistant', content: replyText }]);

@@ -1,0 +1,26 @@
+[
+  {
+    "lat": 28.4744,
+    "lng": 77.5040,
+    "areaReference": "area-reference/street_01.jpg",
+    "sampleGrievance": "grievance/pothole_014.jpg",
+    "sampleResolved": "resolved/clean_road_09.jpg",
+    "capturedAt": "2026-01-15"
+  },
+  {
+    "lat": 28.6139,
+    "lng": 77.2090,
+    "areaReference": "area-reference/street_02.jpg",
+    "sampleGrievance": "grievance/pothole_015.jpg",
+    "sampleResolved": "resolved/clean_road_10.jpg",
+    "capturedAt": "2026-02-10"
+  },
+  {
+    "lat": 28.5355,
+    "lng": 77.3910,
+    "areaReference": "area-reference/market_lane_03.jpg",
+    "sampleGrievance": "grievance/garbage_pile_02.jpg",
+    "sampleResolved": "resolved/cleared_dump_02.jpg",
+    "capturedAt": "2026-03-01"
+  }
+]

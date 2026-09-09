@@ -26,13 +26,13 @@ public class SecurityAccessTest {
     }
 
     @Test
-    public void unauthenticatedMyComplaints_shouldReturnUnauthorized() throws Exception {
+    public void unauthenticatedMyComplaints_shouldAllowGuestComplaints() throws Exception {
         mockMvc.perform(get("/api/complaints/my"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isOk());
     }
 
     @Test
-    public void unauthenticatedCreateComplaint_shouldReturnUnauthorized() throws Exception {
+    public void unauthenticatedCreateComplaint_shouldAllowGuestComplaint() throws Exception {
         mockMvc.perform(post("/api/complaints")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
@@ -45,7 +45,7 @@ public class SecurityAccessTest {
                     "longitude": 77.2090
                 }
                 """))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isCreated());
     }
 
     @Test

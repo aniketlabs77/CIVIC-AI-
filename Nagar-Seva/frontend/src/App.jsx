@@ -9,8 +9,15 @@ import SafetyMap from './pages/SafetyMap';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import MyComplaints from './pages/MyComplaints';
+import MunicipalOfficerDashboard from './pages/MunicipalOfficerDashboard';
 import AdminPanel from './pages/AdminPanel';
 import './styles/index.css';
+
+function DashboardRoute() {
+  const { user } = useAuth();
+  const isAdmin = user && (user.role || '').toUpperCase() === 'ADMIN';
+  return isAdmin ? <MunicipalOfficerDashboard /> : <PublicDashboard />;
+}
 
 function PrivateRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
@@ -19,7 +26,7 @@ function PrivateRoute({ children, allowedRoles }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
+          <div className="animate-spin rounded-full h-10 w-10 border-4 border-[#7c5cff] border-t-transparent"></div>
           <p className="text-sm font-medium text-gray-500">Loading NagarSeva...</p>
         </div>
       </div>
@@ -32,7 +39,7 @@ function PrivateRoute({ children, allowedRoles }) {
 
   const userRole = (user?.role || 'CITIZEN').toUpperCase();
   if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.map(r => r.toUpperCase()).includes(userRole)) {
-    return <Navigate to={userRole === 'ADMIN' ? '/admin' : '/my-complaints'} replace />;
+    return <Navigate to={userRole === 'ADMIN' ? '/dashboard' : '/my-complaints'} replace />;
   }
 
   return children;
@@ -45,7 +52,7 @@ function PublicOnlyRoute({ children }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
+          <div className="animate-spin rounded-full h-10 w-10 border-4 border-[#7c5cff] border-t-transparent"></div>
           <p className="text-sm font-medium text-gray-500">Checking session...</p>
         </div>
       </div>
@@ -54,32 +61,10 @@ function PublicOnlyRoute({ children }) {
 
   if (user) {
     const userRole = (user?.role || 'CITIZEN').toUpperCase();
-    return <Navigate to={userRole === 'ADMIN' ? '/admin' : '/my-complaints'} replace />;
+    return <Navigate to={userRole === 'ADMIN' ? '/dashboard' : '/my-complaints'} replace />;
   }
 
   return children;
-}
-
-function RootRedirect() {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
-          <p className="text-sm font-medium text-gray-500">Loading NagarSeva...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  const userRole = (user?.role || 'CITIZEN').toUpperCase();
-  return <Navigate to={userRole === 'ADMIN' ? '/admin' : '/my-complaints'} replace />;
 }
 
 export default function App() {
@@ -99,42 +84,47 @@ export default function App() {
             </PublicOnlyRoute>
           } />
 
-          {/* Root Path - Redirects to login if unsigned in, or to respective home dashboard */}
-          <Route path="/" element={<RootRedirect />} />
+          {/* Primary Dashboard Route - Adapts to Officer vs Citizen */}
+          <Route path="/" element={
+            <Layout>
+              <DashboardRoute />
+            </Layout>
+          } />
 
-          {/* Protected Pages for Authenticated Users */}
           <Route path="/dashboard" element={
-            <PrivateRoute allowedRoles={['CITIZEN', 'ADMIN']}>
+            <Layout>
+              <DashboardRoute />
+            </Layout>
+          } />
+
+          {/* Explicit Officer Command Center Route */}
+          <Route path="/officer-dashboard" element={
+            <PrivateRoute allowedRoles={['ADMIN']}>
               <Layout>
-                <PublicDashboard />
+                <MunicipalOfficerDashboard />
               </Layout>
             </PrivateRoute>
           } />
           
           <Route path="/safety" element={
-            <PrivateRoute allowedRoles={['CITIZEN', 'ADMIN']}>
-              <Layout>
-                <SafetyMap />
-              </Layout>
-            </PrivateRoute>
+            <Layout>
+              <SafetyMap />
+            </Layout>
           } />
 
           <Route path="/report" element={
-            <PrivateRoute allowedRoles={['CITIZEN', 'ADMIN']}>
-              <Layout>
-                <ReportIssue />
-              </Layout>
-            </PrivateRoute>
+            <Layout>
+              <ReportIssue />
+            </Layout>
           } />
 
           <Route path="/track" element={
-            <PrivateRoute allowedRoles={['CITIZEN', 'ADMIN']}>
-              <Layout>
-                <TrackComplaints />
-              </Layout>
-            </PrivateRoute>
+            <Layout>
+              <TrackComplaints />
+            </Layout>
           } />
 
+          {/* Protected User Pages */}
           <Route path="/my-complaints" element={
             <PrivateRoute allowedRoles={['CITIZEN', 'ADMIN']}>
               <Layout>
@@ -153,7 +143,7 @@ export default function App() {
           } />
 
           {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Router>
     </AuthProvider>

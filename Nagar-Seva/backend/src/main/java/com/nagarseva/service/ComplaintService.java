@@ -34,8 +34,6 @@ import java.util.stream.Collectors;
 public class ComplaintService implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(ComplaintService.class);
-    private static final String GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-    private static final String GROQ_MODEL = "llama-3.3-70b-versatile";
     
     // Safety heatmap constants
     private static final double EARTH_RADIUS_KM = 6371.0;
@@ -48,6 +46,9 @@ public class ComplaintService implements CommandLineRunner {
     @Autowired
     private GeminiService geminiService;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @Value("${app.escalation.threshold-minutes:5}")
     private int escalationThresholdMinutes;
 
@@ -55,10 +56,19 @@ public class ComplaintService implements CommandLineRunner {
     }
 
     /**
-     * Get all complaints
+     * Get all complaints (newest first)
      */
     public List<Complaint> getAllComplaints() {
-        return complaintRepository.findAll();
+        return complaintRepository.findAll().stream()
+                .sorted((a, b) -> Long.compare(b.getId() != null ? b.getId() : 0, a.getId() != null ? a.getId() : 0))
+                .toList();
+    }
+
+    /**
+     * Get complaints paged with Spring Data Pageable
+     */
+    public org.springframework.data.domain.Page<Complaint> getAllComplaints(org.springframework.data.domain.Pageable pageable) {
+        return complaintRepository.findAll(pageable);
     }
 
     /**
@@ -68,10 +78,15 @@ public class ComplaintService implements CommandLineRunner {
         return complaintRepository.findById(id);
     }
 
+    public static final long MAX_PHOTO_SIZE_BYTES = 2L * 1024L * 1024L; // 2MB
+
     /**
      * Create a new complaint with AI-powered routing & multimodal image verification
      */
     public Complaint createComplaint(Complaint complaint) {
+        // Enforce maximum photo upload payload size (2MB)
+        validatePhotoSize(complaint.getPhotoData());
+
         // Set defaults
         complaint.setCreatedAt(LocalDateTime.now());
         complaint.setEscalated(false);
@@ -96,7 +111,40 @@ public class ComplaintService implements CommandLineRunner {
         log.info("Complaint created: ID={}, authority={}, priority={}, imageVerified={}",
                 complaint.getId(), aiResult.routedAuthority(), aiResult.priority(), aiResult.imageVerified());
 
-        return complaintRepository.save(complaint);
+        Complaint saved = complaintRepository.save(complaint);
+        try {
+            notificationService.sendNewComplaintEmail(saved);
+        } catch (Exception e) {
+            log.warn("Failed to send new complaint email: {}", e.getMessage());
+        }
+
+        return saved;
+    }
+
+    /**
+     * Validates that the uploaded base64 photo does not exceed MAX_PHOTO_SIZE_BYTES (2MB)
+     */
+    public void validatePhotoSize(String photoData) {
+        if (photoData == null || photoData.isBlank()) {
+            return;
+        }
+        String base64Content = photoData;
+        int commaIdx = base64Content.indexOf(',');
+        if (commaIdx != -1) {
+            base64Content = base64Content.substring(commaIdx + 1);
+        }
+        long rawLen = base64Content.length();
+        int padding = 0;
+        if (rawLen > 0 && base64Content.charAt((int) rawLen - 1) == '=') padding++;
+        if (rawLen > 1 && base64Content.charAt((int) rawLen - 2) == '=') padding++;
+        long estimatedBytes = (rawLen * 3L / 4L) - padding;
+
+        if (estimatedBytes > MAX_PHOTO_SIZE_BYTES) {
+            double mb = (double) estimatedBytes / (1024.0 * 1024.0);
+            throw new com.nagarseva.config.PhotoSizeLimitExceededException(
+                    String.format("Photo upload exceeds maximum allowed size of 2MB (actual payload: %.2fMB). Please compress or choose a smaller image.", mb)
+            );
+        }
     }
 
     /**
@@ -177,7 +225,28 @@ public class ComplaintService implements CommandLineRunner {
             if (complaintDetails.getResolutionNote() != null) {
                 complaint.setResolutionNote(complaintDetails.getResolutionNote());
             }
-            return Optional.of(complaintRepository.save(complaint));
+            if (complaintDetails.getAreaReferencePhotoUrl() != null) {
+                complaint.setAreaReferencePhotoUrl(complaintDetails.getAreaReferencePhotoUrl());
+            }
+            if (complaintDetails.getAreaReferenceCapturedAt() != null) {
+                complaint.setAreaReferenceCapturedAt(complaintDetails.getAreaReferenceCapturedAt());
+            }
+            if (complaintDetails.getResolutionVerified() != null) {
+                complaint.setResolutionVerified(complaintDetails.getResolutionVerified());
+            }
+            if (complaintDetails.getResolutionVerificationNote() != null) {
+                complaint.setResolutionVerificationNote(complaintDetails.getResolutionVerificationNote());
+            }
+            Complaint saved = complaintRepository.save(complaint);
+
+            if (saved.getStatus() == ComplaintStatus.RESOLVED) {
+                try {
+                    notificationService.sendResolutionEmail(saved);
+                } catch (Exception e) {
+                    log.warn("Failed to send resolution email: {}", e.getMessage());
+                }
+            }
+            return Optional.of(saved);
         }
         return Optional.empty();
     }
@@ -195,7 +264,15 @@ public class ComplaintService implements CommandLineRunner {
                 if (newStatus == ComplaintStatus.RESOLVED && complaint.getResolvedAt() == null) {
                     complaint.setResolvedAt(LocalDateTime.now());
                 }
-                return Optional.of(complaintRepository.save(complaint));
+                Complaint saved = complaintRepository.save(complaint);
+                if (newStatus == ComplaintStatus.RESOLVED) {
+                    try {
+                        notificationService.sendResolutionEmail(saved);
+                    } catch (Exception e) {
+                        log.warn("Failed to send resolution email: {}", e.getMessage());
+                    }
+                }
+                return Optional.of(saved);
             } catch (IllegalArgumentException e) {
                 return Optional.empty();
             }
@@ -496,32 +573,52 @@ public class ComplaintService implements CommandLineRunner {
     }
 
     /**
-     * Scheduled job: Auto-escalate OPEN complaints older than threshold.
-     * Runs every 60 seconds. Threshold is 5 minutes for demo (represents X days in production).
+     * Scheduled job: Auto-escalate OPEN complaints and dispatch recurring reminders until resolved.
+     * Runs every 60 seconds.
      */
     @Scheduled(fixedRate = 60000) // 60 seconds
     @Transactional
     public void autoEscalateOpenComplaints() {
         try {
-            LocalDateTime threshold = LocalDateTime.now().minusMinutes(escalationThresholdMinutes);
-            List<Complaint> staleComplaints = complaintRepository.findAll().stream()
-                    .filter(c -> c.getStatus() == ComplaintStatus.OPEN)
-                    .filter(c -> !c.getEscalated())
-                    .filter(c -> c.getCreatedAt().isBefore(threshold))
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime escalationThreshold = now.minusMinutes(escalationThresholdMinutes);
+            List<Complaint> allUnresolved = complaintRepository.findAll().stream()
+                    .filter(c -> c.getStatus() == ComplaintStatus.OPEN || c.getStatus() == ComplaintStatus.IN_PROGRESS)
                     .toList();
 
-            for (Complaint complaint : staleComplaints) {
-                complaint.setEscalated(true);
+            for (Complaint complaint : allUnresolved) {
+                long minutesUnresolved = Duration.between(complaint.getCreatedAt(), now).toMinutes();
+
+                // 1. Auto-escalate OPEN complaints past the SLA threshold
+                if (complaint.getStatus() == ComplaintStatus.OPEN && !Boolean.TRUE.equals(complaint.getEscalated()) && complaint.getCreatedAt().isBefore(escalationThreshold)) {
+                    complaint.setEscalated(true);
+                    log.warn("Auto-escalated complaint ID {} (OPEN for > {} minutes). Authority: {}",
+                            complaint.getId(), escalationThresholdMinutes, complaint.getRoutedAuthority());
+                }
+
+                // 2. Periodic reminder to both citizen and authority every 2 minutes while unresolved
+                LocalDateTime lastReminder = complaint.getLastReminderSentAt();
+                boolean shouldSendReminder = (lastReminder == null && minutesUnresolved >= 1)
+                        || (lastReminder != null && Duration.between(lastReminder, now).toMinutes() >= 2);
+
+                if (shouldSendReminder) {
+                    try {
+                        notificationService.sendUnresolvedReminderEmail(complaint, Math.max(1, minutesUnresolved));
+                        complaint.setLastReminderSentAt(now);
+                        complaint.setReminderCount(complaint.getReminderCount() + 1);
+                    } catch (Exception e) {
+                        log.warn("Failed to dispatch unresolved reminder for ticket #{}: {}", complaint.getId(), e.getMessage());
+                    }
+                }
+
                 complaintRepository.save(complaint);
-                log.warn("Auto-escalated complaint ID {} (OPEN for > {} minutes). Authority: {}",
-                        complaint.getId(), escalationThresholdMinutes, complaint.getRoutedAuthority());
             }
 
-            if (!staleComplaints.isEmpty()) {
-                log.info("Auto-escalation job processed {} complaints", staleComplaints.size());
+            if (!allUnresolved.isEmpty()) {
+                log.info("Auto-monitor evaluated {} active unresolved complaints", allUnresolved.size());
             }
         } catch (Exception e) {
-            log.error("Auto-escalation job failed: {}", e.getMessage());
+            log.error("Auto-escalation and reminder job failed: {}", e.getMessage());
         }
     }
 

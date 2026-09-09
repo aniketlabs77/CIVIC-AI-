@@ -30,6 +30,9 @@ public class User {
     @Column
     private String name;
 
+    @Column
+    private String department;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -37,6 +40,7 @@ public class User {
     private LocalDateTime lastLoginAt;
 
     @OneToMany(mappedBy = "citizen", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Set<Complaint> complaints;
 
     public User() {
@@ -96,6 +100,14 @@ public class User {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
     }
 
     public LocalDateTime getCreatedAt() {

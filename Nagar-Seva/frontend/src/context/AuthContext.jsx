@@ -31,6 +31,7 @@ export function AuthProvider({ children }) {
         role: profile.role || 'CITIZEN',
         name: profile.name || fbUser.displayName || fbUser.email,
         email: profile.email || fbUser.email,
+        department: profile.department || null,
         firebaseUid: fbUser.uid,
       };
       setUser(combinedUser);
@@ -42,6 +43,7 @@ export function AuthProvider({ children }) {
         role: 'CITIZEN',
         name: fbUser.displayName || fbUser.email,
         email: fbUser.email,
+        department: null,
         firebaseUid: fbUser.uid,
       };
       setUser(fallbackUser);
@@ -49,13 +51,16 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const loginLocalDemo = (role, emailInput, nameInput) => {
+  const loginLocalDemo = (role, emailInput, nameInput, departmentInput) => {
+    const isRoleAdmin = role === 'ADMIN';
+    const dept = isRoleAdmin ? (departmentInput || 'Public Works & Road Safety (PWD)') : null;
     const demoUser = {
-      uid: 'demo-' + (role === 'ADMIN' ? 'admin' : 'citizen') + '-' + Date.now(),
-      email: emailInput || (role === 'ADMIN' ? 'admin@nagarseva.com' : 'citizen@nagarseva.com'),
-      displayName: nameInput || (role === 'ADMIN' ? 'Municipal Admin Officer' : 'Citizen User'),
-      role: role || 'CITIZEN',
-      id: role === 'ADMIN' ? 1 : 2,
+      uid: isRoleAdmin ? `demo-admin-${(dept || 'officer').toLowerCase().replace(/[^a-z0-9]/g, '-')}` : 'demo-citizen-1',
+      email: emailInput || (isRoleAdmin ? 'admin@nagarseva.com' : 'citizen@nagarseva.com'),
+      displayName: nameInput || (isRoleAdmin ? `${dept || 'Municipal'} Admin Officer` : 'Citizen User'),
+      role: isRoleAdmin ? 'ADMIN' : 'CITIZEN',
+      department: dept,
+      id: isRoleAdmin ? 1 : 2,
     };
     try {
       localStorage.setItem('nagarseva_demo_user', JSON.stringify(demoUser));
@@ -96,14 +101,15 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const syncUserProfile = async ({ name, role }) => {
+  const syncUserProfile = async ({ name, role, department }) => {
     try {
-      const response = await apiClient.post('/api/auth/sync-profile', { name, role });
+      const response = await apiClient.post('/api/auth/sync-profile', { name, role, department });
       const profile = response.data;
       setUser(prev => ({
         ...prev,
         role: profile.role || role || 'CITIZEN',
         name: profile.name || name || prev?.name,
+        department: profile.department || department || prev?.department,
       }));
       return profile;
     } catch (err) {

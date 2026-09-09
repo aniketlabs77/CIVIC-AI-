@@ -33,6 +33,7 @@ public class AuthController {
         response.put("email", user.getEmail());
         response.put("name", user.getName());
         response.put("role", user.getRole());
+        response.put("department", user.getDepartment());
         return ResponseEntity.ok(response);
     }
 
@@ -45,9 +46,13 @@ public class AuthController {
 
         String roleStr = body.get("role");
         String nameStr = body.get("name");
+        String deptStr = body.get("department");
 
         if (nameStr != null && !nameStr.isBlank()) {
             user.setName(nameStr.trim());
+        }
+        if (deptStr != null && !deptStr.isBlank()) {
+            user.setDepartment(deptStr.trim());
         }
         if (roleStr != null && !roleStr.isBlank()) {
             try {
@@ -62,6 +67,7 @@ public class AuthController {
         response.put("email", user.getEmail());
         response.put("name", user.getName());
         response.put("role", user.getRole());
+        response.put("department", user.getDepartment());
         return ResponseEntity.ok(response);
     }
 }

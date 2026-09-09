@@ -2,7 +2,9 @@ package com.nagarseva.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "complaints")
@@ -92,8 +94,22 @@ public class Complaint {
     @Column(columnDefinition = "TEXT")
     private String resolutionVerificationNote;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @Column
+    private String areaReferencePhotoUrl;
+
+    @Column
+    private LocalDate areaReferenceCapturedAt;
+
+    @Column
+    private LocalDateTime lastReminderSentAt;
+
+
+    @Column
+    private Integer reminderCount = 0;
+
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "citizen_id")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "complaints"})
     private User citizen;
 
     public Complaint() {
@@ -303,7 +319,40 @@ public class Complaint {
         this.resolutionVerificationNote = resolutionVerificationNote;
     }
 
+    public LocalDateTime getLastReminderSentAt() {
+        return lastReminderSentAt;
+    }
+
+    public void setLastReminderSentAt(LocalDateTime lastReminderSentAt) {
+        this.lastReminderSentAt = lastReminderSentAt;
+    }
+
+    public Integer getReminderCount() {
+        return reminderCount != null ? reminderCount : 0;
+    }
+
+    public void setReminderCount(Integer reminderCount) {
+        this.reminderCount = reminderCount;
+    }
+
+    public String getAreaReferencePhotoUrl() {
+        return areaReferencePhotoUrl;
+    }
+
+    public void setAreaReferencePhotoUrl(String areaReferencePhotoUrl) {
+        this.areaReferencePhotoUrl = areaReferencePhotoUrl;
+    }
+
+    public LocalDate getAreaReferenceCapturedAt() {
+        return areaReferenceCapturedAt;
+    }
+
+    public void setAreaReferenceCapturedAt(LocalDate areaReferenceCapturedAt) {
+        this.areaReferenceCapturedAt = areaReferenceCapturedAt;
+    }
+
     @Override
+
     public String toString() {
         return "Complaint{" +
                 "id=" + id +

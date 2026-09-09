@@ -1,231 +1,192 @@
-# NagarSeva - Civic Grievance Reporting Platform
+# NagarSeva - Civic Grievance Reporting & Management Platform
 
-A full-stack web application for citizens to report civic grievances and track their resolution status.
-
-## Project Structure
-
-```
-NagarSeva/
-├── backend/          # Spring Boot REST API
-├── frontend/         # React + Vite frontend
-└── README.md         # This file
-```
-
-## Features
-
-- 📋 Report civic grievances (complaints) with photo upload & geolocation
-- 🔍 Track complaint status with real-time updates
-- 📊 Public dashboard with statistics, charts & ward rankings
-- 🗺️ Location-based complaint reporting with ward assignment
-- 👥 AI-powered auto-routing to relevant authorities (Groq Llama 3.3)
-- ⚡ Priority classification (High/Medium/Low) & AI-generated summaries
-- 🚨 Auto-escalation of stale complaints (configurable threshold)
-- ✅ Input validation & global error handling
+**NagarSeva** is a production-hardened civic grievance reporting and municipal resolution platform. It bridges citizens and local government bodies through streamlined reporting, multimodal AI verification, intelligent routing, role-based workflows, and automated escalation.
 
 ---
 
-## How to Run
+## 🏛️ System Architecture
+
+```
+nagar-seva/
+├── backend/                  # Spring Boot 3 REST API (Java 17, Maven)
+│   ├── src/main/java/com/nagarseva/
+│   │   ├── config/           # Security, Firebase, Rate Limiting, CORS, Exceptions
+│   │   ├── controller/       # REST Controllers (Complaint, Admin, Dashboard, AI, Safety)
+│   │   ├── entity/           # JPA Entities (Complaint, User, Department, Notification)
+│   │   ├── repository/       # Spring Data Repositories
+│   │   └── service/          # Business Logic (Gemini AI, Escalation, User, Complaint)
+│   └── src/main/resources/
+│       ├── application.properties        # Default / Dev configuration
+│       └── application-prod.properties   # Hardened Production configuration
+│
+└── frontend/                 # React 18 + Vite + Tailwind CSS (Violet/Indigo Theme)
+    ├── src/
+    │   ├── components/       # Reusable UI (Navbar, NotificationCenter, SafetyMap, etc.)
+    │   ├── context/          # AuthContext (Firebase Auth integration)
+    │   ├── pages/            # Page Views (ReportIssue, TrackComplaints, AdminPanel, etc.)
+    │   └── services/         # Axios API Client & Endpoints
+    └── package.json
+```
+
+---
+
+## ✨ Key Features & Capabilities
+
+### 1. Citizen Reporting
+- **Multimodal Issue Reporting**: Submit complaints with category, detailed description, ward assignment, GPS coordinates, and photo evidence.
+- **Client & Server Size Enforcement**: Strict **2MB max photo upload limit** enforced in `ReportIssue.jsx` and server-side in `ComplaintService` (returns `413 Payload Too Large`).
+- **Interactive Map Pinning**: Built-in Leaflet map integration to pick or verify coordinates.
+- **Citizen Dashboard & History**: Filter and view submitted complaints with status tags.
+
+### 2. AI Intelligence (Google Gemini 1.5 Flash)
+- **Multimodal Vision & NLP**: Evaluates uploaded photo and description using `gemini-1.5-flash`.
+- **Automated Department Routing**: Assigns complaints directly to the responsible municipal department (Roads, Electricity, Water & Sanitation, Waste Management, Public Health).
+- **Urgency & Priority Scoring**: Classifies priority into `HIGH`, `MEDIUM`, or `LOW` with an AI rationale.
+- **Executive Summaries**: Synthesizes concise 1–2 sentence operational summaries for field officers.
+- **Resolution Verification**: Evaluates before/after photos and resolution notes to confirm repairs before marking resolved.
+- **Graceful Fallback**: Deterministic rule-based heuristic routing if `GEMINI_API_KEY` is not provided in development.
+
+### 3. Municipal Admin Panel
+- **Role-Based Access Control (RBAC)**: Enforces `ROLE_ADMIN` on `/api/admin/**` endpoints.
+- **Department-Scoped Views**: Department admins only see complaints routed to their jurisdiction; super-admins see all.
+- **Resolution Workflow**: Requires resolution note and completion photo proof, triggering AI resolution verification.
+- **Live SLA Monitoring**: Identifies overdue complaints nearing or exceeding escalation thresholds.
+
+### 4. Public Analytics Dashboard & Safety
+- **Civic Analytics**: Ward-by-ward resolution performance rankings, category distributions, and real-time status metrics via Recharts.
+- **Safety Hotspot Heatmap**: Visualizes high-density clusters of unaddressed issues to inform municipal planning.
+
+### 5. Automated Escalation
+- Background scheduler periodically checks unresolved `OPEN` complaints exceeding SLA thresholds (configurable via `app.escalation.threshold-minutes`) and escalates them with visual indicators (`escalated: true`).
+
+---
+
+## 🔒 Security & Production Hardening
+
+- **Gated Dev Auth Bypass**: Development demo token bypass (`demo-token:citizen`, `demo-token:admin`) in `FirebaseAuthFilter` is strictly gated to `@Profile("dev")` and permanently disabled in `prod`.
+- **IP Rate Limiting**: In-memory sliding window rate limiter (`RateLimitingFilter`) applied to public `POST /api/complaints` (default: 5 requests/minute/IP, returns `429 Too Many Requests` with `Retry-After: 60`). Configurable via `app.rate-limiting.requests-per-minute`.
+- **Database Pagination**: `GET /api/complaints` and `GET /api/admin/complaints` return Spring Data `Page<Complaint>` (`page`, `size`, `sort`). Frontend components (`TrackComplaints.jsx`, `AdminPanel.jsx`) render responsive violet/indigo pagination controls.
+- **Production Fail-Fast Validator**: `ProdEnvironmentValidator` halts startup under `prod` profile if critical secrets (`DATABASE_URL`, `FIREBASE_CREDENTIALS_PATH`, `GEMINI_API_KEY`) are missing.
+- **Production Profiles**: `application-prod.properties` disables the H2 console, turns off `show-sql`, and sets Hibernate SQL logging to `WARN`.
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
-
-| Tool | Version | Purpose |
-|------|---------|---------|
-| **Java** | 17+ | Backend runtime |
-| **Maven** | 3.6+ | Backend build tool |
-| **Node.js** | 18+ | Frontend runtime |
-| **npm** | 9+ | Frontend package manager |
-| **Groq API Key** | Optional | AI routing (from [console.groq.com](https://console.groq.com)) |
-| **PostgreSQL** | Optional | Production database; H2 in-memory works for local/demo |
+- **Java 17+** and **Maven 3.8+**
+- **Node.js 18+** and **npm 9+**
+- *(Optional for Dev)* **Google Gemini API Key** ([Google AI Studio](https://aistudio.google.com/))
+- *(Optional for Dev)* **Firebase Project** service account credentials (demo credentials supported in dev profile)
 
 ---
 
-### Local Setup — Backend
+### Backend Setup
 
-1. **Navigate to the backend folder**
+1. **Navigate to the backend directory**:
    ```bash
-   cd backend
+   cd Nagar-Seva/backend
    ```
 
-2. **(Optional) Set Groq API Key** — without it, the app uses rule-based fallback routing
+2. **Configure Environment Variables (Optional in Dev)**:
    ```bash
-   # Linux/macOS
-   export GROQ_API_KEY=gsk_your_key_here
-
    # Windows (PowerShell)
-   $env:GROQ_API_KEY="gsk_your_key_here"
+   $env:GEMINI_API_KEY="your_gemini_api_key"
+   $env:FIREBASE_CREDENTIALS_PATH="path/to/serviceAccountKey.json"
+
+   # Linux/macOS
+   export GEMINI_API_KEY="your_gemini_api_key"
+   export FIREBASE_CREDENTIALS_PATH="path/to/serviceAccountKey.json"
    ```
 
-3. **Run the Spring Boot app**
+3. **Run Backend (Dev Profile - Default)**:
    ```bash
    mvn spring-boot:run
    ```
-   Or if you prefer a clean build first:
-   ```bash
-   mvn clean install
-   mvn spring-boot:run
-   ```
+   The backend boots on `http://localhost:8080`.
+   - Health Check: `http://localhost:8080/actuator/health`
+   - Dev H2 Console: `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:mem:nagarsevadb`, user: `sa`, password: empty)
 
-4. **Verify it started successfully**
-   - The app runs on **port 8080** (or 8081 if 8080 is busy)
-   - Look for this log line: `Started NagarSevaApplication in X.XXX seconds`
-   - Health check: `curl http://localhost:8080/actuator/health` → should return `{"status":"UP"}`
-   - H2 Console: `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:mem:nagarsevadb`, user: `sa`, password: empty)
+4. **Run Backend in Production Mode**:
+   ```bash
+   mvn clean package -DskipTests
+   java -jar target/nagarseva-api-1.0.0.jar --spring.profiles.active=prod
+   ```
 
 ---
 
-### Local Setup — Frontend
+### Frontend Setup
 
-1. **Navigate to the frontend folder**
+1. **Navigate to the frontend directory**:
    ```bash
-   cd frontend
+   cd Nagar-Seva/frontend
    ```
 
-2. **Install dependencies**
+2. **Install Dependencies**:
    ```bash
    npm install
    ```
 
-3. **Create `.env.local` pointing to the local backend**
-   ```bash
-   # Copy the example file
-   cp .env.example .env.local
+3. **Configure Environment (`.env.local`)**:
+   ```env
+   VITE_API_URL=http://localhost:8080
+   VITE_FIREBASE_API_KEY=your_firebase_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   VITE_FIREBASE_APP_ID=your_app_id
    ```
-   Or create it manually:
-   ```bash
-   echo "VITE_API_URL=http://localhost:8080" > .env.local
-   ```
-   **Note:** If your backend runs on a different port (e.g., 8081), update the URL accordingly.
 
-4. **Run the dev server**
+4. **Start Development Server**:
    ```bash
    npm run dev
    ```
+   App runs at `http://localhost:5173`.
 
-5. **Open in browser**
-   - The app will be available at **http://localhost:5173**
-   - Vite will auto-open the browser, or click the link in the terminal
-
----
-
-### Demo Walkthrough
-
-1. **Report an Issue**
-   - Open http://localhost:5173
-   - Click **"Report Issue"** in the navbar
-   - Fill in: Category (e.g., "Streetlight"), Description, Location, Ward (default "Ward 1"), Latitude/Longitude (or click "Use My Current Location")
-   - Optionally upload a photo
-   - Click **"Submit Complaint"** — you'll see a success message with the complaint ID
-
-2. **Track Complaints**
-   - Click **"Track Complaints"** in the navbar
-   - You'll see all complaints with AI-generated fields:
-     - **Routed Authority** (e.g., "Electricity Department")
-     - **Priority** badge (HIGH=red, MEDIUM=yellow, LOW=green)
-     - **AI Summary** (1-2 sentence summary for the authority)
-     - **Escalated** status (⚠️ Yes / ✅ No)
-   - Use the status dropdown to change a complaint's status (OPEN → IN_PROGRESS → RESOLVED)
-   - Filter by status using the dropdown
-
-3. **Public Dashboard**
-   - Click **"Dashboard"** in the navbar
-   - View 4 summary cards: Total, Resolved, Pending, Escalated
-   - See **Complaints per Ward** bar chart (total vs resolved)
-   - See **Complaints by Category** bar chart
-   - View **Ward Resolution Rate Ranking** table with resolution % and avg resolution time
-   - Color-coded complaint list (red=OPEN, yellow=IN_PROGRESS, green=RESOLVED)
-
-4. **Auto-Escalation Demo**
-   - The demo threshold is **5 minutes** (represents X days in production)
-   - Any complaint with status **OPEN** for >5 minutes gets auto-escalated
-   - Check the `escalated` field in Track Complaints or Dashboard
-   - To test: create a complaint, wait 5+ minutes, refresh — it will show ⚠️ Yes
+5. **Build for Production**:
+   ```bash
+   npm run build
+   ```
 
 ---
 
-### Deployment
+## 📡 REST API Summary
 
-Required environment variables for production:
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `POST` | `/api/complaints` | Public (Rate Limited) | Submit a complaint (Max 2MB photo, rate limited to 5 req/min) |
+| `GET` | `/api/complaints` | Public | Paginated complaints list (`page`, `size`, `sort`) |
+| `GET` | `/api/complaints/{id}` | Public | Detailed complaint view |
+| `PATCH` | `/api/complaints/{id}/status` | Authenticated | Update complaint status (`OPEN`, `IN_PROGRESS`, `RESOLVED`) |
+| `GET` | `/api/complaints/my` | Citizen / Authenticated | Fetch complaints submitted by current user |
+| `GET` | `/api/admin/complaints` | Admin (`ROLE_ADMIN`) | Paginated admin complaint queue with department filtering |
+| `POST` | `/api/admin/complaints/{id}/resolve` | Admin (`ROLE_ADMIN`) | Resolve complaint with photo proof and note (Gemini verification) |
+| `GET` | `/api/admin/stats` | Admin (`ROLE_ADMIN`) | Administrative operational KPIs and SLA counts |
+| `GET` | `/api/dashboard/stats` | Public | Ward rankings, category stats, resolution rates |
+| `GET` | `/api/safety/heatmap` | Public | Ward safety and grievance density metrics |
+| `POST` | `/api/ai/verify` | Authenticated | Test Gemini multimodal verification on an image payload |
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@host:5432/db` |
-| `GROQ_API_KEY` | Groq API key for AI routing | `gsk_...` |
-| `FRONTEND_URL` | Allowed CORS origin(s), comma-separated | `https://your-frontend.com` |
-| `VITE_API_URL` | Frontend → backend API URL | `https://your-backend.com` |
-| `APP_ESCALATION_THRESHOLD_MINUTES` | Minutes before auto-escalation (default 5) | `1440` (24 hrs) |
+---
 
-**Production build commands:**
+## 🧪 Testing
+
+The backend includes comprehensive MockMvc and unit tests covering controllers, rate limiting, authentication, environment validation, and AI fallback:
+
 ```bash
-# Backend
-cd backend && mvn clean package -DskipTests
-java -jar target/nagarseva-api-1.0.0.jar
-
-# Frontend
-cd frontend && npm run build
-# Serve the `dist/` folder with nginx, Vercel, Netlify, etc.
+cd Nagar-Seva/backend
+mvn test
 ```
 
----
-
-### Troubleshooting
-
-| Issue | Fix |
-|-------|-----|
-| **Port 8080 already in use** | Kill the process: `fuser -k 8080/tcp` (Linux/macOS) or `netstat -ano \| findstr :8080` then `taskkill /PID <pid> /F` (Windows). Or change port in `application.properties`: `server.port=8081` |
-| **CORS error in browser console** | Ensure `VITE_API_URL` in `frontend/.env.local` matches the backend URL exactly (including port). For production, set `FRONTEND_URL` backend env var to your frontend domain. |
-| **Backend fails to start with "Web server failed to start"** | Port conflict — see "Port 8080 already in use" above. |
-| **Frontend shows "Failed to load complaints"** | Check that backend is running and `VITE_API_URL` is correct. Test with `curl http://localhost:8080/api/complaints`. |
-| **Validation errors on submit** | All fields are required: category, description, location, ward, latitude, longitude. Description must be 10-2000 chars. Latitude -90 to 90, Longitude -180 to 180. |
+### Key Test Suites:
+- `ComplaintControllerTest`: Verifies public submission, 400 bad requests, 413 photo size ceiling, pagination parameters, and 429 rate limit enforcement.
+- `AdminControllerTest`: Validates 401 unauthenticated access, 403 citizen denial, 200 admin paged retrieval, and resolution validation.
+- `FirebaseAuthFilterProdTest`: Verifies that `demo-token:` bypass headers are strictly rejected in `prod` profile.
+- `SecurityAccessTest`: Validates role-based route protection across admin and citizen paths.
+- `UserServiceTest`: Validates Firebase UID auto-provisioning and synchronization.
+- `GeminiServiceTest`: Tests AI routing, heuristic fallback, and resolution checks.
 
 ---
 
-## API Endpoints
-
-### Complaints
-- `GET /api/complaints` - List all complaints
-- `GET /api/complaints/{id}` - Get complaint by ID
-- `POST /api/complaints` - Create new complaint (validates: category, description, location, ward, latitude, longitude)
-- `PUT /api/complaints/{id}` - Update complaint
-- `PATCH /api/complaints/{id}/status` - Update complaint status
-- `DELETE /api/complaints/{id}` - Delete complaint
-
-### Dashboard
-- `GET /api/dashboard/stats` - Get dashboard statistics:
-  - `totalComplaints`, `resolvedCount`, `pendingCount`, `escalatedCount`
-  - `complaintsByWard`: `{total, resolved, resolutionRate, avgResolutionTimeHours}`
-  - `complaintsByCategory`: `{category: count}`
-
----
-
-## Database
-
-- **Development**: H2 in-memory database (auto-creates schema, seeds 10 sample complaints)
-- **Production**: PostgreSQL (set `DATABASE_URL` env var)
-- Schema auto-managed by Hibernate (`ddl-auto`)
-
----
-
-## Technology Stack
-
-### Backend
-- Spring Boot 3.x
-- Spring Data JPA / Hibernate
-- H2 Database (dev) / PostgreSQL (prod)
-- Groq API (AI routing via llama-3.3-70b-versatile)
-- Spring Scheduling (auto-escalation)
-- Bean Validation (input validation)
-- Maven
-
-### Frontend
-- React 18+
-- Vite
-- React Router v6
-- Axios
-- Tailwind CSS
-- Recharts (dashboard charts)
-
----
-
-## License
-
-MIT
+## 📄 License
+This project is licensed under the MIT License.

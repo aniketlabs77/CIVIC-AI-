@@ -42,15 +42,21 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Allow CORS pre-flight requests
                 .requestMatchers(antMatcher(HttpMethod.OPTIONS, "/**")).permitAll()
-                // Public GET endpoints
+                // Public GET & AI endpoints
                 .requestMatchers(antMatcher(HttpMethod.GET, "/api/dashboard/**")).permitAll()
                 .requestMatchers(antMatcher("/api/safety/**")).permitAll()
                 .requestMatchers(antMatcher(HttpMethod.GET, "/api/complaints")).permitAll()
-                .requestMatchers(antMatcher(HttpMethod.GET, "/api/complaints/*")).permitAll()
-                // Actuator & H2 console & AI assistant
+                .requestMatchers(antMatcher(HttpMethod.GET, "/api/complaints/{id:[0-9]+}")).permitAll()
+                .requestMatchers(antMatcher(HttpMethod.POST, "/api/complaints")).permitAll()
+                .requestMatchers(antMatcher("/api/complaints/my")).permitAll()
+                // Actuator & H2 console & AI assistant & Notifications
                 .requestMatchers(antMatcher("/actuator/**")).permitAll()
                 .requestMatchers(antMatcher("/h2-console/**")).permitAll()
-                .requestMatchers(antMatcher(HttpMethod.POST, "/api/ai/chat")).permitAll()
+                .requestMatchers(antMatcher("/api/ai/**")).permitAll()
+                .requestMatchers(antMatcher(HttpMethod.GET, "/api/notifications/**")).permitAll()
+                .requestMatchers(antMatcher("/demo-assets/**")).permitAll()
+                .requestMatchers(antMatcher("/api/demo-assets/**")).permitAll()
+
                 // Admin endpoints - require ROLE_ADMIN
                 .requestMatchers(antMatcher("/api/admin/**")).hasRole("ADMIN")
                 // Citizen complaint actions - require authentication
