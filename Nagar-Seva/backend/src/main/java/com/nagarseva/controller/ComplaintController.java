@@ -4,6 +4,7 @@ import com.nagarseva.entity.Complaint;
 import com.nagarseva.entity.User;
 import com.nagarseva.service.ComplaintService;
 import com.nagarseva.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -90,10 +91,10 @@ public class ComplaintController {
     }
 
     /**
-     * POST /api/complaints - Create a new complaint
+     * POST /api/complaints - Create a new complaint with photo forensics validation
      */
     @PostMapping
-    public ResponseEntity<Complaint> createComplaint(@Valid @RequestBody Complaint complaint) {
+    public ResponseEntity<Complaint> createComplaint(@Valid @RequestBody Complaint complaint, HttpServletRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User citizen = null;
         if (authentication != null && authentication.getPrincipal() instanceof User user) {
@@ -102,9 +103,9 @@ public class ComplaintController {
             citizen = userService.findByEmail("citizen@nagarseva.com")
                     .orElseGet(() -> userService.findOrCreateByFirebaseUid("demo-citizen-guest", "citizen@nagarseva.com"));
         }
-        
+
         complaint.setCitizen(citizen);
-        Complaint createdComplaint = complaintService.createComplaint(complaint);
+        Complaint createdComplaint = complaintService.createComplaint(complaint, request);
 
         if (demoImageBankService != null && createdComplaint.getLatitude() != null && createdComplaint.getLongitude() != null) {
             try {
@@ -120,7 +121,6 @@ public class ComplaintController {
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(createdComplaint);
-
     }
 
     /**

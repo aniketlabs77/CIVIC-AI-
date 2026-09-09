@@ -7,6 +7,7 @@ import com.nagarseva.entity.Complaint;
 import com.nagarseva.entity.ComplaintPriority;
 import com.nagarseva.entity.ComplaintStatus;
 import com.nagarseva.repository.ComplaintRepository;
+import com.nagarseva.repository.SlaConfigRepository;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -28,17 +29,22 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 public class ComplaintService implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(ComplaintService.class);
-    
+
     // Safety heatmap constants
     private static final double EARTH_RADIUS_KM = 6371.0;
     private static final double SAFETY_CLUSTER_RADIUS_KM = 0.2; // 200m
     private static final double ROUTE_CHECK_RADIUS_KM = 0.3; // 300m
+
+    // Duplicate detection radius (100m)
+    private static final double DUPLICATE_DETECTION_RADIUS_KM = 0.1;
 
     @Autowired
     private ComplaintRepository complaintRepository;
@@ -49,8 +55,29 @@ public class ComplaintService implements CommandLineRunner {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private PhotoForensicsService photoForensicsService;
+
+    @Autowired
+    private ObjectStorageService objectStorageService;
+
+    // @Autowired
+    // private SlaConfigRepository slaConfigRepository; // TODO: Enable when SLA config is fully integrated
+
+    @Autowired
+    private AuditService auditService;
+
+    @Autowired
+    private WebSocketNotificationService wsNotificationService;
+
     @Value("${app.escalation.threshold-minutes:5}")
     private int escalationThresholdMinutes;
+
+    @Value("${app.duplicate-detection.enabled:true}")
+    private boolean duplicateDetectionEnabled;
+
+    @Value("${app.storage.migrate-base64:false}")
+    private boolean migrateBase64ToObjectStorage;
 
     public ComplaintService() {
     }
@@ -82,9 +109,53 @@ public class ComplaintService implements CommandLineRunner {
 
     /**
      * Create a new complaint with AI-powered routing & multimodal image verification
+     * Includes photo forensics validation, duplicate detection, and object storage migration
      */
-    public Complaint createComplaint(Complaint complaint) {
-        // Enforce maximum photo upload payload size (2MB)
+    public Complaint createComplaint(Complaint complaint, jakarta.servlet.http.HttpServletRequest request) {
+        // 1. Photo forensics validation (if photo provided)
+        if (complaint.getPhotoData() != null && !complaint.getPhotoData().isBlank()) {
+            PhotoForensicsService.ValidationResult validation = photoForensicsService.validateComplaintPhoto(
+                    complaint.getPhotoData(), complaint.getLatitude(), complaint.getLongitude()
+            );
+
+            if (!validation.valid()) {
+                throw new com.nagarseva.config.PhotoSizeLimitExceededException(
+                        "Photo validation failed: " + validation.errorMessage()
+                );
+            }
+
+            // Store forensics results for audit
+            complaint.setImageVerified(validation.forensics().hasValidExif() && validation.forensics().isOriginal());
+            complaint.setImageVerificationNote("Forensics: " + validation.forensics().manipulationIndicators());
+
+            // 2. Upload to object storage if enabled (migrate from base64)
+            if (objectStorageService.isEnabled() && migrateBase64ToObjectStorage) {
+                try {
+                    ObjectStorageService.UploadResult uploadResult = objectStorageService.uploadBase64Image(
+                            complaint.getPhotoData(), "complaints/" + UUID.randomUUID(), "grievance.jpg"
+                    );
+                    complaint.setPhotoObjectKey(uploadResult.objectKey());
+                    complaint.setPhotoUrl(uploadResult.publicUrl());
+                    // Clear base64 to save DB space
+                    complaint.setPhotoData(null);
+                } catch (Exception e) {
+                    log.warn("Failed to upload photo to object storage, keeping base64: {}", e.getMessage());
+                }
+            }
+        }
+
+        // 3. Duplicate detection (spatial + category)
+        if (duplicateDetectionEnabled) {
+            Optional<Complaint> duplicate = findNearbyDuplicate(complaint);
+            if (duplicate.isPresent()) {
+                Complaint existing = duplicate.get();
+                log.info("Duplicate complaint detected: new complaint near existing #{}", existing.getId());
+                // Could throw exception or just log - for now, log and continue
+                // throw new DuplicateComplaintException("Similar issue already reported: Ticket #" + existing.getId());
+            }
+        }
+
+        // 4. Enforce maximum photo upload payload size (2MB) - for base64 fallback
         validatePhotoSize(complaint.getPhotoData());
 
         // Set defaults
@@ -96,7 +167,7 @@ public class ComplaintService implements CommandLineRunner {
         if (complaint.getWard() == null || complaint.getWard().isBlank()) {
             complaint.setWard("Ward 1");
         }
-        
+
         // Set issueType based on category
         setIssueType(complaint);
 
@@ -105,13 +176,33 @@ public class ComplaintService implements CommandLineRunner {
         complaint.setRoutedAuthority(aiResult.routedAuthority());
         complaint.setAiSummary(aiResult.aiSummary());
         complaint.setPriority(aiResult.priority());
-        complaint.setImageVerified(aiResult.imageVerified());
-        complaint.setImageVerificationNote(aiResult.imageVerificationNote());
+        // Keep forensics results if already set, otherwise use Gemini
+        if (complaint.getImageVerified() == null) {
+            complaint.setImageVerified(aiResult.imageVerified());
+        }
+        if (complaint.getImageVerificationNote() == null) {
+            complaint.setImageVerificationNote(aiResult.imageVerificationNote());
+        }
 
         log.info("Complaint created: ID={}, authority={}, priority={}, imageVerified={}",
                 complaint.getId(), aiResult.routedAuthority(), aiResult.priority(), aiResult.imageVerified());
 
         Complaint saved = complaintRepository.save(complaint);
+
+        // Audit log
+        auditService.logComplaintCreated(
+                request != null ? getCurrentUserEmail(request) : "anonymous",
+                request != null ? getCurrentUserRole(request) : "CITIZEN",
+                saved.getId(), saved, request
+        );
+
+        // Real-time notification to department
+        if (saved.getRoutedAuthority() != null) {
+            wsNotificationService.notifyDepartmentNewComplaint(
+                    saved.getRoutedAuthority(), saved.getId(), saved.getCategory(), saved.getLocation()
+            );
+        }
+
         try {
             notificationService.sendNewComplaintEmail(saved);
         } catch (Exception e) {
@@ -119,6 +210,45 @@ public class ComplaintService implements CommandLineRunner {
         }
 
         return saved;
+    }
+
+    /**
+     * Overload for backward compatibility
+     */
+    public Complaint createComplaint(Complaint complaint) {
+        return createComplaint(complaint, null);
+    }
+
+    /**
+     * Find nearby duplicate complaint within radius
+     */
+    public Optional<Complaint> findNearbyDuplicate(Complaint newComplaint) {
+        if (newComplaint.getLatitude() == null || newComplaint.getLongitude() == null) {
+            return Optional.empty();
+        }
+
+        return complaintRepository.findAll().stream()
+                .filter(c -> c.getStatus() == ComplaintStatus.OPEN || c.getStatus() == ComplaintStatus.IN_PROGRESS)
+                .filter(c -> c.getCategory() != null && c.getCategory().equalsIgnoreCase(newComplaint.getCategory()))
+                .filter(c -> {
+                    double distance = calculateDistance(
+                            newComplaint.getLatitude(), newComplaint.getLongitude(),
+                            c.getLatitude(), c.getLongitude()
+                    );
+                    return distance <= DUPLICATE_DETECTION_RADIUS_KM;
+                })
+                .findFirst();
+    }
+
+    private String getCurrentUserEmail(jakarta.servlet.http.HttpServletRequest request) {
+        // Extract from Firebase auth or header
+        String email = request.getHeader("X-User-Email");
+        return email != null ? email : "unknown@citizen";
+    }
+
+    private String getCurrentUserRole(jakarta.servlet.http.HttpServletRequest request) {
+        String role = request.getHeader("X-User-Role");
+        return role != null ? role : "CITIZEN";
     }
 
     /**

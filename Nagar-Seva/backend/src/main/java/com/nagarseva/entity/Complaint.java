@@ -49,6 +49,16 @@ public class Complaint {
     @Column(columnDefinition = "LONGTEXT")
     private String photoData;
 
+    // Object storage keys (for S3/MinIO migration)
+    @Column
+    private String photoObjectKey;
+
+    @Column
+    private String resolutionPhotoObjectKey;
+
+    @Column
+    private String areaRefObjectKey;
+
     @Column
     private String routedAuthority;
 
@@ -197,6 +207,30 @@ public class Complaint {
 
     public void setPhotoData(String photoData) {
         this.photoData = photoData;
+    }
+
+    public String getPhotoObjectKey() {
+        return photoObjectKey;
+    }
+
+    public void setPhotoObjectKey(String photoObjectKey) {
+        this.photoObjectKey = photoObjectKey;
+    }
+
+    public String getResolutionPhotoObjectKey() {
+        return resolutionPhotoObjectKey;
+    }
+
+    public void setResolutionPhotoObjectKey(String resolutionPhotoObjectKey) {
+        this.resolutionPhotoObjectKey = resolutionPhotoObjectKey;
+    }
+
+    public String getAreaRefObjectKey() {
+        return areaRefObjectKey;
+    }
+
+    public void setAreaRefObjectKey(String areaRefObjectKey) {
+        this.areaRefObjectKey = areaRefObjectKey;
     }
 
     public String getRoutedAuthority() {
