@@ -21,11 +21,13 @@ public class AdminController {
     private com.nagarseva.service.GeminiService geminiService;
 
     /**
-     * GET /api/admin/complaints - Get all complaints (admin view)
+     * GET /api/admin/complaints - Get all complaints with pagination (admin view)
      */
     @GetMapping("/complaints")
-    public ResponseEntity<List<Complaint>> getAllComplaints() {
-        List<Complaint> complaints = complaintService.getAllComplaints();
+    public ResponseEntity<org.springframework.data.domain.Page<Complaint>> getAllComplaints(
+            @org.springframework.data.web.PageableDefault(size = 10, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC)
+            org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<Complaint> complaints = complaintService.getAllComplaints(pageable);
         return ResponseEntity.ok(complaints);
     }
 
@@ -57,11 +59,23 @@ public class AdminController {
 
         Complaint complaint = existingComplaintOpt.get();
 
-        // Run Gemini Vision resolution verification
+        String beforePhoto = complaint.getPhotoData() != null && !complaint.getPhotoData().isBlank()
+                ? complaint.getPhotoData()
+                : complaint.getPhotoUrl();
+        String areaReferencePhoto = complaint.getAreaReferencePhotoUrl();
+
+        // Run Gemini Vision resolution verification with 3 images: areaReference + beforePhoto + resolutionPhoto
         com.nagarseva.service.GeminiService.ResolutionVerificationResult verificationResult =
-                geminiService.verifyResolutionProof(complaint.getPhotoData(), resolutionPhotoUrl, complaint.getCategory(), resolutionNote);
+                geminiService.verifyResolutionProof(
+                        complaint.getCategory(),
+                        resolutionNote,
+                        beforePhoto,
+                        resolutionPhotoUrl,
+                        areaReferencePhoto
+                );
 
         complaint.setStatus(com.nagarseva.entity.ComplaintStatus.RESOLVED);
+
         complaint.setResolvedAt(java.time.LocalDateTime.now());
         complaint.setResolutionPhotoUrl(resolutionPhotoUrl);
         complaint.setResolutionNote(resolutionNote);

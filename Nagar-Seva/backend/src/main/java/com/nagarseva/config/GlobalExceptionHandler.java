@@ -39,6 +39,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(errors);
     }
 
+    @ExceptionHandler(PhotoSizeLimitExceededException.class)
+    public ResponseEntity<Map<String, String>> handlePhotoSizeLimit(PhotoSizeLimitExceededException ex) {
+        Map<String, String> error = Map.of(
+                "error", "Payload Too Large",
+                "message", ex.getMessage()
+        );
+        log.warn("Photo size limit exceeded: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(error);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
         Map<String, String> error = Map.of("error", ex.getMessage());

@@ -2,7 +2,9 @@ package com.nagarseva.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "complaints")
@@ -93,7 +95,14 @@ public class Complaint {
     private String resolutionVerificationNote;
 
     @Column
+    private String areaReferencePhotoUrl;
+
+    @Column
+    private LocalDate areaReferenceCapturedAt;
+
+    @Column
     private LocalDateTime lastReminderSentAt;
+
 
     @Column
     private Integer reminderCount = 0;
@@ -326,7 +335,24 @@ public class Complaint {
         this.reminderCount = reminderCount;
     }
 
+    public String getAreaReferencePhotoUrl() {
+        return areaReferencePhotoUrl;
+    }
+
+    public void setAreaReferencePhotoUrl(String areaReferencePhotoUrl) {
+        this.areaReferencePhotoUrl = areaReferencePhotoUrl;
+    }
+
+    public LocalDate getAreaReferenceCapturedAt() {
+        return areaReferenceCapturedAt;
+    }
+
+    public void setAreaReferenceCapturedAt(LocalDate areaReferenceCapturedAt) {
+        this.areaReferenceCapturedAt = areaReferenceCapturedAt;
+    }
+
     @Override
+
     public String toString() {
         return "Complaint{" +
                 "id=" + id +

@@ -34,8 +34,6 @@ import java.util.stream.Collectors;
 public class ComplaintService implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(ComplaintService.class);
-    private static final String GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-    private static final String GROQ_MODEL = "llama-3.3-70b-versatile";
     
     // Safety heatmap constants
     private static final double EARTH_RADIUS_KM = 6371.0;
@@ -67,16 +65,28 @@ public class ComplaintService implements CommandLineRunner {
     }
 
     /**
+     * Get complaints paged with Spring Data Pageable
+     */
+    public org.springframework.data.domain.Page<Complaint> getAllComplaints(org.springframework.data.domain.Pageable pageable) {
+        return complaintRepository.findAll(pageable);
+    }
+
+    /**
      * Get complaint by ID
      */
     public Optional<Complaint> getComplaintById(Long id) {
         return complaintRepository.findById(id);
     }
 
+    public static final long MAX_PHOTO_SIZE_BYTES = 2L * 1024L * 1024L; // 2MB
+
     /**
      * Create a new complaint with AI-powered routing & multimodal image verification
      */
     public Complaint createComplaint(Complaint complaint) {
+        // Enforce maximum photo upload payload size (2MB)
+        validatePhotoSize(complaint.getPhotoData());
+
         // Set defaults
         complaint.setCreatedAt(LocalDateTime.now());
         complaint.setEscalated(false);
@@ -109,6 +119,32 @@ public class ComplaintService implements CommandLineRunner {
         }
 
         return saved;
+    }
+
+    /**
+     * Validates that the uploaded base64 photo does not exceed MAX_PHOTO_SIZE_BYTES (2MB)
+     */
+    public void validatePhotoSize(String photoData) {
+        if (photoData == null || photoData.isBlank()) {
+            return;
+        }
+        String base64Content = photoData;
+        int commaIdx = base64Content.indexOf(',');
+        if (commaIdx != -1) {
+            base64Content = base64Content.substring(commaIdx + 1);
+        }
+        long rawLen = base64Content.length();
+        int padding = 0;
+        if (rawLen > 0 && base64Content.charAt((int) rawLen - 1) == '=') padding++;
+        if (rawLen > 1 && base64Content.charAt((int) rawLen - 2) == '=') padding++;
+        long estimatedBytes = (rawLen * 3L / 4L) - padding;
+
+        if (estimatedBytes > MAX_PHOTO_SIZE_BYTES) {
+            double mb = (double) estimatedBytes / (1024.0 * 1024.0);
+            throw new com.nagarseva.config.PhotoSizeLimitExceededException(
+                    String.format("Photo upload exceeds maximum allowed size of 2MB (actual payload: %.2fMB). Please compress or choose a smaller image.", mb)
+            );
+        }
     }
 
     /**
@@ -189,7 +225,20 @@ public class ComplaintService implements CommandLineRunner {
             if (complaintDetails.getResolutionNote() != null) {
                 complaint.setResolutionNote(complaintDetails.getResolutionNote());
             }
+            if (complaintDetails.getAreaReferencePhotoUrl() != null) {
+                complaint.setAreaReferencePhotoUrl(complaintDetails.getAreaReferencePhotoUrl());
+            }
+            if (complaintDetails.getAreaReferenceCapturedAt() != null) {
+                complaint.setAreaReferenceCapturedAt(complaintDetails.getAreaReferenceCapturedAt());
+            }
+            if (complaintDetails.getResolutionVerified() != null) {
+                complaint.setResolutionVerified(complaintDetails.getResolutionVerified());
+            }
+            if (complaintDetails.getResolutionVerificationNote() != null) {
+                complaint.setResolutionVerificationNote(complaintDetails.getResolutionVerificationNote());
+            }
             Complaint saved = complaintRepository.save(complaint);
+
             if (saved.getStatus() == ComplaintStatus.RESOLVED) {
                 try {
                     notificationService.sendResolutionEmail(saved);

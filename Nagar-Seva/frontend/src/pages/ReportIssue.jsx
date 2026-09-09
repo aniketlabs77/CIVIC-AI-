@@ -333,6 +333,17 @@ export default function ReportIssue() {
         return;
       }
 
+      // Enforce 2MB photo upload limit
+      const maxSizeBytes = 2 * 1024 * 1024;
+      if (file.size > maxSizeBytes) {
+        const fileMb = (file.size / (1024 * 1024)).toFixed(2);
+        setMessage(`❌ Selected photo exceeds 2MB limit (selected: ${fileMb}MB). Please upload a smaller or compressed image.`);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        setPhotoPreview('');
+        setFormData(prev => ({ ...prev, photoData: '' }));
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (event) => {
         const base64String = event.target.result;
@@ -373,6 +384,14 @@ export default function ReportIssue() {
       };
 
       if (formData.photoData) {
+        // Enforce 2MB client-side check on base64 payload
+        const base64Content = formData.photoData.includes(',') ? formData.photoData.split(',')[1] : formData.photoData;
+        const estimatedBytes = (base64Content.length * 3) / 4;
+        if (estimatedBytes > 2 * 1024 * 1024) {
+          setMessage('❌ Photo upload exceeds 2MB limit. Please compress or choose a smaller image.');
+          setLoading(false);
+          return;
+        }
         complaintData.photoData = formData.photoData;
       }
 
@@ -724,7 +743,7 @@ export default function ReportIssue() {
                 <div className="py-4">
                   <span className="text-2xl mb-1 block">📷</span>
                   <p className="text-xs font-bold text-gray-700">Click to upload photo evidence</p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">Supports PNG, JPG, JPEG up to 5MB</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">Supports PNG, JPG, JPEG (Max 2MB)</p>
                 </div>
               )}
             </div>

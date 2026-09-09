@@ -9,8 +9,15 @@ import SafetyMap from './pages/SafetyMap';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import MyComplaints from './pages/MyComplaints';
+import MunicipalOfficerDashboard from './pages/MunicipalOfficerDashboard';
 import AdminPanel from './pages/AdminPanel';
 import './styles/index.css';
+
+function DashboardRoute() {
+  const { user } = useAuth();
+  const isAdmin = user && (user.role || '').toUpperCase() === 'ADMIN';
+  return isAdmin ? <MunicipalOfficerDashboard /> : <PublicDashboard />;
+}
 
 function PrivateRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
@@ -32,7 +39,7 @@ function PrivateRoute({ children, allowedRoles }) {
 
   const userRole = (user?.role || 'CITIZEN').toUpperCase();
   if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.map(r => r.toUpperCase()).includes(userRole)) {
-    return <Navigate to={userRole === 'ADMIN' ? '/admin' : '/my-complaints'} replace />;
+    return <Navigate to={userRole === 'ADMIN' ? '/dashboard' : '/my-complaints'} replace />;
   }
 
   return children;
@@ -54,7 +61,7 @@ function PublicOnlyRoute({ children }) {
 
   if (user) {
     const userRole = (user?.role || 'CITIZEN').toUpperCase();
-    return <Navigate to={userRole === 'ADMIN' ? '/admin' : '/my-complaints'} replace />;
+    return <Navigate to={userRole === 'ADMIN' ? '/dashboard' : '/my-complaints'} replace />;
   }
 
   return children;
@@ -77,17 +84,26 @@ export default function App() {
             </PublicOnlyRoute>
           } />
 
-          {/* Public Civic Pages - Accessible to everyone */}
+          {/* Primary Dashboard Route - Adapts to Officer vs Citizen */}
           <Route path="/" element={
             <Layout>
-              <PublicDashboard />
+              <DashboardRoute />
             </Layout>
           } />
 
           <Route path="/dashboard" element={
             <Layout>
-              <PublicDashboard />
+              <DashboardRoute />
             </Layout>
+          } />
+
+          {/* Explicit Officer Command Center Route */}
+          <Route path="/officer-dashboard" element={
+            <PrivateRoute allowedRoles={['ADMIN']}>
+              <Layout>
+                <MunicipalOfficerDashboard />
+              </Layout>
+            </PrivateRoute>
           } />
           
           <Route path="/safety" element={

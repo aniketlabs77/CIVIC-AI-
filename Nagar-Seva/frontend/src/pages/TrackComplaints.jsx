@@ -11,25 +11,43 @@ export default function TrackComplaints() {
   const [searchQuery, setSearchQuery] = useState('');
   const [updatingId, setUpdatingId] = useState(null);
   const [message, setMessage] = useState('');
+  const [page, setPage] = useState(0);
+  const [pageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
 
   useEffect(() => {
-    fetchComplaints();
+    fetchComplaints(0);
   }, []);
 
-  const fetchComplaints = async () => {
+  const fetchComplaints = async (targetPage = page) => {
     setLoading(true);
     setError('');
     try {
-      const response = await apiClient.get('/api/complaints');
+      const response = await apiClient.get('/api/complaints', {
+        params: { page: targetPage, size: pageSize }
+      });
       let data = response.data;
       if (typeof data === 'string') {
         try {
           data = JSON.parse(data);
         } catch {
-          data = [];
+          data = {};
         }
       }
-      setComplaints(Array.isArray(data) ? data : []);
+      if (data && Array.isArray(data.content)) {
+        setComplaints(data.content);
+        setTotalPages(data.totalPages || 1);
+        setTotalElements(data.totalElements || data.content.length);
+        setPage(data.number !== undefined ? data.number : targetPage);
+      } else if (Array.isArray(data)) {
+        setComplaints(data);
+        setTotalPages(1);
+        setTotalElements(data.length);
+        setPage(0);
+      } else {
+        setComplaints([]);
+      }
     } catch (err) {
       console.error('Error fetching complaints:', err);
       setError('Could not load complaints from the server. Please ensure the backend is running.');
@@ -287,7 +305,8 @@ export default function TrackComplaints() {
       {!loading && (
         <div>
           {filteredComplaints.length > 0 ? (
-            <div className="space-y-4">
+            <>
+              <div className="space-y-4">
               {filteredComplaints.map((complaint) => (
                 <div
                   key={complaint.id}
@@ -419,7 +438,49 @@ export default function TrackComplaints() {
                 </div>
               ))}
             </div>
-          ) : (
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mt-6">
+                <div className="text-xs text-gray-500">
+                  Showing page <span className="font-bold text-gray-800">{page + 1}</span> of{' '}
+                  <span className="font-bold text-gray-800">{totalPages}</span> ({totalElements} total complaints)
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => fetchComplaints(page - 1)}
+                    disabled={page === 0 || loading}
+                    className="px-3.5 py-1.5 rounded-full border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    ← Previous
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i).map((pageNum) => (
+                      <button
+                        key={pageNum}
+                        onClick={() => fetchComplaints(pageNum)}
+                        className={`w-8 h-8 rounded-full text-xs font-bold transition ${
+                          page === pageNum
+                            ? 'bg-[#7c5cff] text-white shadow-xs'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        {pageNum + 1}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => fetchComplaints(page + 1)}
+                    disabled={page >= totalPages - 1 || loading}
+                    className="px-3.5 py-1.5 rounded-full border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
             <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100 text-xs text-gray-400 space-y-2">
               <div className="text-3xl">📋</div>
               <p className="font-semibold text-gray-600">No complaints found matching your filter criteria.</p>

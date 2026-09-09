@@ -26,12 +26,20 @@ public class ComplaintController {
     @Autowired
     private UserService userService;
 
+    @Autowired(required = false)
+    private com.nagarseva.service.DemoImageBankService demoImageBankService;
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ComplaintController.class);
+
     /**
-     * GET /api/complaints - Retrieve all complaints
+     * GET /api/complaints - Retrieve all complaints with pagination
      */
+
     @GetMapping
-    public ResponseEntity<List<Complaint>> getAllComplaints() {
-        List<Complaint> complaints = complaintService.getAllComplaints();
+    public ResponseEntity<org.springframework.data.domain.Page<Complaint>> getAllComplaints(
+            @org.springframework.data.web.PageableDefault(size = 10, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC)
+            org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<Complaint> complaints = complaintService.getAllComplaints(pageable);
         return ResponseEntity.ok(complaints);
     }
 
@@ -97,7 +105,22 @@ public class ComplaintController {
         
         complaint.setCitizen(citizen);
         Complaint createdComplaint = complaintService.createComplaint(complaint);
+
+        if (demoImageBankService != null && createdComplaint.getLatitude() != null && createdComplaint.getLongitude() != null) {
+            try {
+                demoImageBankService.findNearestReference(createdComplaint.getLatitude(), createdComplaint.getLongitude())
+                        .ifPresent(ref -> {
+                            createdComplaint.setAreaReferencePhotoUrl(ref.photoUrl());
+                            createdComplaint.setAreaReferenceCapturedAt(ref.capturedAt());
+                            complaintService.updateComplaint(createdComplaint.getId(), createdComplaint);
+                        });
+            } catch (Exception e) {
+                log.warn("Failed to find nearest reference image: {}", e.getMessage());
+            }
+        }
+
         return ResponseEntity.status(HttpStatus.CREATED).body(createdComplaint);
+
     }
 
     /**

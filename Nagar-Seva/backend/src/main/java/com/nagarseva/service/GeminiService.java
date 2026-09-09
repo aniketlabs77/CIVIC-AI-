@@ -34,7 +34,16 @@ public class GeminiService {
     private String model;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final CloseableHttpClient httpClient = HttpClients.createDefault();
+    private CloseableHttpClient httpClient = HttpClients.createDefault();
+
+    public void setHttpClient(CloseableHttpClient httpClient) {
+        this.httpClient = httpClient;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
+    }
+
 
     public record ComplaintAnalysisResult(
             String routedAuthority,
@@ -137,11 +146,18 @@ public class GeminiService {
     }
 
     /**
-     * Verify resolution after-photo against category
+    /**
+     * Verify resolution photos (area reference + grievance photo + resolution proof) against category and note.
      */
-    public ResolutionVerificationResult verifyResolutionProof(String category, String resolutionNote, String beforePhoto, String afterPhoto) {
+    public ResolutionVerificationResult verifyResolutionProof(
+            String category,
+            String resolutionNote,
+            String beforePhoto,
+            String afterPhoto,
+            String areaReferencePhoto) {
+
         if (apiKey == null || apiKey.isBlank()) {
-            return new ResolutionVerificationResult(true, "Resolution photo logged and confirmed.");
+            return new ResolutionVerificationResult(false, "Manual review required: AI verification unconfigured. Resolution proof flagged for officer audit.");
         }
 
         try {
@@ -152,22 +168,46 @@ public class GeminiService {
             ObjectNode contentObj = contentsArray.addObject();
             ArrayNode partsArray = contentObj.putArray("parts");
 
-            String prompt = String.format("""
-                    You are NagarSeva AI auditor.
-                    A municipal authority has marked a '%s' complaint as RESOLVED.
-                    Resolution Note: %s
-                    
-                    Examine the resolution image provided.
-                    Respond strictly in JSON with NO markdown backticks:
-                    {
-                      "resolutionVerified": true or false,
-                      "resolutionVerificationNote": "Short evaluation explaining if work appears completed"
-                    }
-                    """, category, resolutionNote != null ? resolutionNote : "Issue marked as resolved");
+            boolean hasAreaRef = areaReferencePhoto != null && !areaReferencePhoto.isBlank();
+            boolean hasBefore = beforePhoto != null && !beforePhoto.isBlank();
+            boolean hasAfter = afterPhoto != null && !afterPhoto.isBlank();
 
-            partsArray.addObject().put("text", prompt);
+            StringBuilder promptBuilder = new StringBuilder();
+            promptBuilder.append("You are NagarSeva AI auditor, verifying municipal civic issue resolutions.\n");
+            promptBuilder.append(String.format("A municipal authority has marked a '%s' grievance as RESOLVED.\n", category != null ? category : "Civic Issue"));
+            promptBuilder.append(String.format("Officer Resolution Note: %s\n\n", resolutionNote != null ? resolutionNote : "Issue marked as resolved"));
+            promptBuilder.append("Attached visual evidence (in order):\n");
 
-            if (afterPhoto != null && !afterPhoto.isBlank()) {
+            int imageIndex = 1;
+            if (hasAreaRef) {
+                promptBuilder.append(String.format("- Image %d: AREA_REFERENCE (historical reference baseline of this location before any reported grievance; loose context only)\n", imageIndex++));
+            }
+            if (hasBefore) {
+                promptBuilder.append(String.format("- Image %d: GRIEVANCE_PHOTO (the citizen's reported problem showing the civic defect)\n", imageIndex++));
+            }
+            if (hasAfter) {
+                promptBuilder.append(String.format("- Image %d: RESOLUTION_PHOTO (the officer's remediation proof showing the completed repair)\n", imageIndex++));
+            }
+
+            promptBuilder.append("\nVerification Instructions:\n");
+            promptBuilder.append("1. Treat AREA_REFERENCE as loose, best-effort context only (it may be stale, from a different angle, or missing). Do NOT require an exact match with the area reference.\n");
+            promptBuilder.append("2. Base your verdict primarily on comparing GRIEVANCE_PHOTO against RESOLUTION_PHOTO to judge whether the specific defect reported by the citizen has been genuinely repaired and resolved.\n");
+            promptBuilder.append("3. In your verification note, explicitly mention whether the area reference was available/useful, and summarize visual evidence supporting your decision.\n\n");
+            promptBuilder.append("Respond strictly in valid JSON format with NO markdown wrapping:\n");
+            promptBuilder.append("{\n");
+            promptBuilder.append("  \"resolutionVerified\": true or false,\n");
+            promptBuilder.append("  \"resolutionVerificationNote\": \"Detailed evaluation explaining if the reported defect was resolved, noting whether area reference was available/useful\"\n");
+            promptBuilder.append("}\n");
+
+            partsArray.addObject().put("text", promptBuilder.toString());
+
+            if (hasAreaRef) {
+                attachInlineImage(partsArray, areaReferencePhoto);
+            }
+            if (hasBefore) {
+                attachInlineImage(partsArray, beforePhoto);
+            }
+            if (hasAfter) {
                 attachInlineImage(partsArray, afterPhoto);
             }
 
@@ -182,23 +222,32 @@ public class GeminiService {
                     String text = extractTextFromGeminiResponse(root);
                     JsonNode json = parseCleanJson(text);
 
-                    boolean verified = json.path("resolutionVerified").asBoolean(true);
+                    boolean verified = json.path("resolutionVerified").asBoolean(false);
                     String note = json.path("resolutionVerificationNote").asText(
-                            verified ? "Verified: Resolution photo confirms the reported issue was fixed." : "Notice: Resolution photo requires additional manual verification."
+                            verified ? "Verified: Resolution photo confirms the reported issue was fixed."
+                                     : "Manual review required: Resolution photo does not adequately confirm the fix."
                     );
                     return new ResolutionVerificationResult(verified, note);
+                } else {
+                    log.error("Gemini resolution verification failed with status {}: {}", response.getCode(), responseBody);
                 }
             }
         } catch (Exception e) {
-            log.error("Resolution verification failed: {}", e.getMessage());
+            log.error("Resolution verification failed: {}", e.getMessage(), e);
         }
 
-        return new ResolutionVerificationResult(true, "Resolution submitted and logged.");
+        // Fail-closed fallback: flag as review required rather than silently auto-verifying
+        return new ResolutionVerificationResult(false, "Manual review required: Automated AI verification could not confirm resolution proof.");
+    }
+
+    public ResolutionVerificationResult verifyResolutionProof(String category, String resolutionNote, String beforePhoto, String afterPhoto) {
+        return verifyResolutionProof(category, resolutionNote, beforePhoto, afterPhoto, null);
     }
 
     public ResolutionVerificationResult verifyResolution(String category, String resolutionNote, String beforePhoto, String afterPhoto) {
-        return verifyResolutionProof(category, resolutionNote, beforePhoto, afterPhoto);
+        return verifyResolutionProof(category, resolutionNote, beforePhoto, afterPhoto, null);
     }
+
 
     /**
      * Interactive Civic Assistant Chatbot response with strict multiturn validation
@@ -309,15 +358,39 @@ public class GeminiService {
     }
 
     private void attachInlineImage(ArrayNode partsArray, String photoData) {
-        String mimeType = "image/jpeg";
-        String base64Data = photoData;
+        if (photoData == null || photoData.isBlank()) {
+            return;
+        }
 
-        if (photoData.startsWith("data:")) {
-            int semicolon = photoData.indexOf(';');
-            int comma = photoData.indexOf(',');
+        String mimeType = "image/jpeg";
+        String base64Data = photoData.trim();
+
+        if (base64Data.startsWith("data:")) {
+            int semicolon = base64Data.indexOf(';');
+            int comma = base64Data.indexOf(',');
             if (semicolon > 5 && comma > semicolon) {
-                mimeType = photoData.substring(5, semicolon);
-                base64Data = photoData.substring(comma + 1);
+                mimeType = base64Data.substring(5, semicolon);
+                base64Data = base64Data.substring(comma + 1);
+            }
+        } else if (base64Data.startsWith("/demo-assets/") || base64Data.startsWith("demo-assets/")
+                || base64Data.startsWith("area-reference/") || base64Data.startsWith("grievance/") || base64Data.startsWith("resolved/")) {
+            String cleanPath = base64Data;
+            if (cleanPath.startsWith("/demo-assets/")) {
+                cleanPath = "demo-assets/" + cleanPath.substring("/demo-assets/".length());
+            } else if (!cleanPath.startsWith("demo-assets/")) {
+                cleanPath = "demo-assets/" + cleanPath;
+            }
+            try {
+                org.springframework.core.io.ClassPathResource cpr = new org.springframework.core.io.ClassPathResource(cleanPath);
+                if (cpr.exists()) {
+                    byte[] bytes = cpr.getInputStream().readAllBytes();
+                    base64Data = java.util.Base64.getEncoder().encodeToString(bytes);
+                    if (cleanPath.endsWith(".png")) {
+                        mimeType = "image/png";
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Could not read demo asset bytes from {}: {}", cleanPath, e.getMessage());
             }
         }
 
@@ -326,6 +399,7 @@ public class GeminiService {
         inlineData.put("mime_type", mimeType);
         inlineData.put("data", base64Data);
     }
+
 
     private String extractTextFromGeminiResponse(JsonNode root) {
         JsonNode candidates = root.path("candidates");

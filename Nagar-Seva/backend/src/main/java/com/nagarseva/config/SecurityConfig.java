@@ -54,6 +54,9 @@ public class SecurityConfig {
                 .requestMatchers(antMatcher("/h2-console/**")).permitAll()
                 .requestMatchers(antMatcher("/api/ai/**")).permitAll()
                 .requestMatchers(antMatcher(HttpMethod.GET, "/api/notifications/**")).permitAll()
+                .requestMatchers(antMatcher("/demo-assets/**")).permitAll()
+                .requestMatchers(antMatcher("/api/demo-assets/**")).permitAll()
+
                 // Admin endpoints - require ROLE_ADMIN
                 .requestMatchers(antMatcher("/api/admin/**")).hasRole("ADMIN")
                 // Citizen complaint actions - require authentication

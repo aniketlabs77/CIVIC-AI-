@@ -34,7 +34,8 @@ export default function MyComplaints() {
           data = [];
         }
       }
-      setComplaints(Array.isArray(data) ? data : []);
+      const complaintList = Array.isArray(data) ? data : (Array.isArray(data?.content) ? data.content : []);
+      setComplaints(complaintList);
     } catch (err) {
       console.error('Error loading complaints:', err);
       setError('Unable to load your complaints from the municipal service.');

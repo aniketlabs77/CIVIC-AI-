@@ -43,7 +43,8 @@ export default function PublicDashboard() {
             data = [];
           }
         }
-        setComplaints(Array.isArray(data) ? data : []);
+        const complaintList = Array.isArray(data) ? data : (Array.isArray(data?.content) ? data.content : []);
+        setComplaints(complaintList);
       }
 
       if (statsRes.status === 'fulfilled' && statsRes.value) {

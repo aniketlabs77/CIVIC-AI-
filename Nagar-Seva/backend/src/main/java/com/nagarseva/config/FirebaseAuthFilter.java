@@ -31,6 +31,9 @@ public class FirebaseAuthFilter extends OncePerRequestFilter {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private org.springframework.core.env.Environment env;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -41,8 +44,19 @@ public class FirebaseAuthFilter extends OncePerRequestFilter {
             String token = authHeader.substring(7).trim();
 
             if (!token.isEmpty()) {
-                // 1. Support local demo development token (zero Firebase credentials required)
+                // 1. Support local demo development token (strictly restricted to dev profile)
                 if (token.startsWith("demo-token:")) {
+                    boolean isDev = env != null
+                            && env.acceptsProfiles(org.springframework.core.env.Profiles.of("dev"))
+                            && !env.acceptsProfiles(org.springframework.core.env.Profiles.of("prod"));
+
+                    if (!isDev) {
+                        log.warn("Rejected demo-token in non-dev/production profile for request: {}", request.getRequestURI());
+                        SecurityContextHolder.clearContext();
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
+
                     try {
                         String[] parts = token.split(":", 5);
                         String roleStr = parts.length > 1 ? parts[1] : "CITIZEN";

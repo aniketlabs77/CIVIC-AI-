@@ -86,7 +86,7 @@ export default function Register() {
 
       const userProfile = await fetchUserProfile(userCredential.user);
       if (selectedRole === 'ADMIN' || (userProfile && userProfile.role === 'ADMIN')) {
-        navigate('/admin');
+        navigate('/dashboard');
       } else {
         navigate('/my-complaints');
       }
@@ -102,7 +102,7 @@ export default function Register() {
           finalDepartment
         );
         if (selectedRole === 'ADMIN') {
-          navigate('/admin');
+          navigate('/dashboard');
         } else {
           navigate('/my-complaints');
         }
