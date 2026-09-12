@@ -9,12 +9,20 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class NotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    @Autowired(required = false)
+    private JavaMailSender mailSender;
 
     // In-memory circular notification log (stores up to 150 recent notifications)
     private final Deque<NotificationRecord> notificationLogs = new ConcurrentLinkedDeque<>();
@@ -33,6 +41,26 @@ public class NotificationService {
             LocalDateTime sentAt,
             String status // DELIVERED, DISPATCHED
     ) {}
+
+    @Async
+    protected void sendEmailAsync(String to, String subject, String text, Long complaintId, String statusType) {
+        if (mailSender == null) {
+            log.warn("NOTIFICATION_FAILED complaintId={} to={} status={} reason=\"JavaMailSender is not configured. Missing SMTP configuration.\"", complaintId, to, statusType);
+            return;
+        }
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(text, true); // HTML true
+            helper.setFrom("noreply@nagarseva.gov.in");
+            mailSender.send(message);
+            log.info("NOTIFICATION_SENT complaintId={} to={} status={}", complaintId, to, statusType);
+        } catch (Exception e) {
+            log.error("NOTIFICATION_FAILED complaintId={} to={} status={} reason=\"{}\"", complaintId, to, statusType, e.getMessage());
+        }
+    }
 
     /**
      * Map authority name to their official department email
@@ -280,6 +308,21 @@ public class NotificationService {
     }
 
     private void recordNotification(String type, Complaint complaint, String recipientEmail, String recipientRole, String subject, String body) {
+        // Check preferences before attempting to send
+        boolean shouldSend = true;
+        if ("CITIZEN".equals(recipientRole)) {
+            if (complaint.getCitizen() != null && !complaint.getCitizen().isNotificationsEnabled()) {
+                shouldSend = false;
+                log.info("NOTIFICATION_SKIPPED complaintId={} to={} status={} reason=\"User disabled notifications\"", 
+                         complaint.getId(), recipientEmail, type);
+            }
+        }
+
+        // Send actual email via JavaMailSender
+        if (shouldSend) {
+            sendEmailAsync(recipientEmail, subject, body.replace("\n", "<br>"), complaint.getId(), type);
+        }
+
         NotificationRecord record = new NotificationRecord(
                 UUID.randomUUID().toString().substring(0, 8),
                 type,
@@ -291,7 +334,7 @@ public class NotificationService {
                 subject,
                 body,
                 LocalDateTime.now(),
-                "DELIVERED"
+                shouldSend ? "DISPATCHED" : "SKIPPED_PREFERENCE"
         );
 
         notificationLogs.addFirst(record);

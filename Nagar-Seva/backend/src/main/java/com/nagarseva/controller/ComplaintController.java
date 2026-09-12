@@ -27,6 +27,9 @@ public class ComplaintController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private com.nagarseva.service.ExportService exportService;
+
     @Autowired(required = false)
     private com.nagarseva.service.DemoImageBankService demoImageBankService;
 
@@ -48,7 +51,13 @@ public class ComplaintController {
      * GET /api/complaints/my - Get current user's complaints
      */
     @GetMapping("/my")
-    public ResponseEntity<List<Complaint>> getMyComplaints() {
+    public ResponseEntity<List<Complaint>> getMyComplaints(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo,
+            @RequestParam(required = false) String keyword) {
+        
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = null;
         Long userId = null;
@@ -61,7 +70,7 @@ public class ComplaintController {
         final Long finalUserId = userId;
         final String finalUserEmail = userEmail;
 
-        List<Complaint> myComplaints = allComplaints.stream()
+        java.util.stream.Stream<Complaint> stream = allComplaints.stream()
                 .filter(c -> {
                     if (finalUserId != null && c.getCitizen() != null && finalUserId.equals(c.getCitizen().getId())) {
                         return true;
@@ -74,8 +83,38 @@ public class ComplaintController {
                         return c.getCitizen() == null || "citizen@nagarseva.com".equalsIgnoreCase(c.getCitizen().getEmail());
                     }
                     return false;
-                })
-                .collect(java.util.stream.Collectors.toList());
+                });
+
+        if (status != null && !status.isEmpty()) {
+            stream = stream.filter(c -> c.getStatus() != null && c.getStatus().name().equalsIgnoreCase(status));
+        }
+        if (department != null && !department.isEmpty()) {
+            stream = stream.filter(c -> c.getRoutedAuthority() != null && c.getRoutedAuthority().equalsIgnoreCase(department));
+        }
+        if (keyword != null && !keyword.isEmpty()) {
+            final String kw = keyword.toLowerCase();
+            stream = stream.filter(c -> (c.getCategory() != null && c.getCategory().toLowerCase().contains(kw)) ||
+                                        (c.getDescription() != null && c.getDescription().toLowerCase().contains(kw)) ||
+                                        (c.getWard() != null && c.getWard().toLowerCase().contains(kw)));
+        }
+        if (dateFrom != null && !dateFrom.isEmpty()) {
+            try {
+                java.time.LocalDate fromDate = java.time.LocalDate.parse(dateFrom);
+                stream = stream.filter(c -> c.getCreatedAt() != null && !c.getCreatedAt().toLocalDate().isBefore(fromDate));
+            } catch (Exception e) {
+                // ignore invalid date formats
+            }
+        }
+        if (dateTo != null && !dateTo.isEmpty()) {
+            try {
+                java.time.LocalDate toDate = java.time.LocalDate.parse(dateTo);
+                stream = stream.filter(c -> c.getCreatedAt() != null && !c.getCreatedAt().toLocalDate().isAfter(toDate));
+            } catch (Exception e) {
+                // ignore invalid date formats
+            }
+        }
+
+        List<Complaint> myComplaints = stream.collect(java.util.stream.Collectors.toList());
 
         return ResponseEntity.ok(myComplaints.isEmpty() ? allComplaints : myComplaints);
     }
@@ -197,5 +236,47 @@ public class ComplaintController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportComplaints(@RequestParam(defaultValue = "csv") String format) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User tempUser = null;
+        if (authentication != null && authentication.getPrincipal() instanceof User user) {
+            tempUser = user;
+        }
+        final User currentUser = tempUser;
+
+        List<Complaint> complaints;
+        if (currentUser != null && currentUser.getRole() == com.nagarseva.entity.UserRole.CITIZEN) {
+            complaints = complaintService.getAllComplaints().stream()
+                .filter(c -> c.getCitizen() != null && c.getCitizen().getId().equals(currentUser.getId()))
+                .collect(java.util.stream.Collectors.toList());
+        } else if (currentUser != null && currentUser.getRole() != com.nagarseva.entity.UserRole.ADMIN) {
+            // Treat as department admin if role not ADMIN or CITIZEN
+            complaints = complaintService.getAllComplaints().stream()
+                .filter(c -> currentUser.getDepartment() != null && currentUser.getDepartment().equalsIgnoreCase(c.getRoutedAuthority()))
+                .collect(java.util.stream.Collectors.toList());
+        } else {
+            complaints = complaintService.getAllComplaints();
+        }
+
+        try {
+            if ("pdf".equalsIgnoreCase(format)) {
+                byte[] data = exportService.exportComplaintsToPdf(complaints);
+                org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+                headers.setContentType(org.springframework.http.MediaType.APPLICATION_PDF);
+                headers.setContentDispositionFormData("attachment", "complaints.pdf");
+                return new ResponseEntity<>(data, headers, HttpStatus.OK);
+            } else {
+                byte[] data = exportService.exportComplaintsToCsv(complaints);
+                org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+                headers.setContentType(org.springframework.http.MediaType.parseMediaType("text/csv"));
+                headers.setContentDispositionFormData("attachment", "complaints.csv");
+                return new ResponseEntity<>(data, headers, HttpStatus.OK);
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 }

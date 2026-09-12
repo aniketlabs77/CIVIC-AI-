@@ -39,6 +39,9 @@ public class User {
     @Column
     private LocalDateTime lastLoginAt;
 
+    @Column(nullable = false)
+    private boolean notificationsEnabled = true;
+
     @OneToMany(mappedBy = "citizen", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @com.fasterxml.jackson.annotation.JsonIgnore
     private Set<Complaint> complaints;
@@ -124,6 +127,14 @@ public class User {
 
     public void setLastLoginAt(LocalDateTime lastLoginAt) {
         this.lastLoginAt = lastLoginAt;
+    }
+
+    public boolean isNotificationsEnabled() {
+        return notificationsEnabled;
+    }
+
+    public void setNotificationsEnabled(boolean notificationsEnabled) {
+        this.notificationsEnabled = notificationsEnabled;
     }
 
     public Set<Complaint> getComplaints() {

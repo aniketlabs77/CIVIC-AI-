@@ -183,19 +183,19 @@ export default function Login() {
       <div className="w-full max-w-lg">
         {/* Branding header */}
         <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-[#7c5cff] flex items-center justify-center text-white text-xl font-black shadow-md mx-auto mb-3">
+          <div className="w-12 h-12 rounded-2xl bg-[#7c5cff] flex items-center justify-center text-white text-xl font-black shadow-md dark:shadow-none mx-auto mb-3">
             🏛️
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
             Sign In to NagarSeva
           </h2>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Civic Grievance Redressal & Department Action Portal
           </p>
         </div>
 
         {/* Card Container */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100/90">
+        <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/90">
           {/* Role Pill Switcher */}
           <div className="mb-5">
             <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2 text-center">
@@ -207,8 +207,8 @@ export default function Login() {
                 onClick={() => handleRoleChange('CITIZEN')}
                 className={`py-2 px-3 rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 ${
                   selectedRole === 'CITIZEN'
-                    ? 'bg-white text-gray-900 shadow-xs'
-                    : 'text-gray-500 hover:text-gray-900'
+                    ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-xs'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100'
                 }`}
               >
                 <span>👤</span> Citizen Login
@@ -219,7 +219,7 @@ export default function Login() {
                 className={`py-2 px-3 rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 ${
                   selectedRole === 'ADMIN'
                     ? 'bg-[#7c5cff] text-white shadow-xs'
-                    : 'text-gray-500 hover:text-gray-900'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100'
                 }`}
               >
                 <span>🛡️</span> Municipal Official
@@ -234,14 +234,14 @@ export default function Login() {
                 <span className="text-base">{activeDeptInfo.icon}</span>
                 <span className="font-extrabold text-violet-950">{activeDeptInfo.name}</span>
               </div>
-              <p className="text-[11px] text-gray-600 leading-relaxed">
+              <p className="text-[11px] text-gray-600 dark:text-gray-400 leading-relaxed">
                 {activeDeptInfo.description}
               </p>
             </div>
           ) : (
-            <div className="mb-5 p-3 rounded-2xl border border-gray-200 bg-gray-50 text-xs text-gray-700">
-              <p className="font-bold text-gray-900 mb-0.5">👤 Citizen Grievance Portal</p>
-              <p className="text-[11px] text-gray-500">
+            <div className="mb-5 p-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-xs text-gray-700 dark:text-gray-300">
+              <p className="font-bold text-gray-900 dark:text-gray-100 mb-0.5">👤 Citizen Grievance Portal</p>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400">
                 File civic reports, explore public safety heatmaps, and track repair proof.
               </p>
             </div>
@@ -258,7 +258,7 @@ export default function Login() {
             {/* Department Selection (For Municipal Admin) */}
             {selectedRole === 'ADMIN' && (
               <div>
-                <label htmlFor="department" className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1 flex items-center justify-between">
+                <label htmlFor="department" className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1 flex items-center justify-between">
                   <span>🏛️ Assigned Department</span>
                   <span className="text-[10px] text-[#7c5cff] font-semibold">Select jurisdiction</span>
                 </label>
@@ -266,7 +266,7 @@ export default function Login() {
                   id="department"
                   value={selectedDepartment}
                   onChange={(e) => handleDepartmentChange(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-gray-100 focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
                 >
                   {MUNICIPAL_DEPARTMENTS.map((dept) => (
                     <option key={dept.id} value={dept.name}>
@@ -278,7 +278,7 @@ export default function Login() {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">
+              <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1">
                 Official Email Address
               </label>
               <input
@@ -289,13 +289,13 @@ export default function Login() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
+                className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-gray-100 focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
                 placeholder={selectedRole === 'ADMIN' ? activeDeptInfo.email : 'citizen@nagarseva.com'}
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">
+              <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1">
                 Password
               </label>
               <input
@@ -306,7 +306,7 @@ export default function Login() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
+                className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-gray-100 focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
                 placeholder="••••••••"
               />
             </div>
@@ -315,7 +315,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-full bg-gray-900 hover:bg-black text-white text-xs sm:text-sm font-bold shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 px-4 rounded-full bg-gray-900 hover:bg-black text-white text-xs sm:text-sm font-bold shadow-md dark:shadow-none transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {loading ? (
                   <>
@@ -332,7 +332,7 @@ export default function Login() {
           </form>
 
           {/* Quick 1-Click Department Logins */}
-          <div className="mt-6 pt-5 border-t border-gray-100">
+          <div className="mt-6 pt-5 border-t border-gray-100 dark:border-gray-700">
             <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2.5 text-center">
               ⚡ 1-Click Department Official Logins
             </p>
@@ -345,7 +345,7 @@ export default function Login() {
                   className={`p-2 rounded-xl border text-[11px] font-semibold text-left transition flex items-center gap-1.5 ${
                     selectedRole === 'ADMIN' && selectedDepartment === dept.name
                       ? 'bg-violet-50 border-[#7c5cff] text-[#7c5cff] shadow-xs'
-                      : 'bg-gray-50 border-gray-200/80 hover:bg-gray-100 text-gray-700'
+                      : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700/80 hover:bg-gray-100 text-gray-700 dark:text-gray-300'
                   }`}
                 >
                   <span className="text-sm">{dept.icon}</span>
@@ -358,14 +358,14 @@ export default function Login() {
               <button
                 type="button"
                 onClick={handleCitizenDemo}
-                className="px-4 py-1.5 rounded-full border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition"
+                className="px-4 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:bg-gray-900 transition"
               >
                 👤 Quick Citizen Demo Login
               </button>
             </div>
           </div>
 
-          <div className="mt-5 text-center text-xs text-gray-500">
+          <div className="mt-5 text-center text-xs text-gray-500 dark:text-gray-400">
             Don't have an official account?{' '}
             <Link to="/register" className="font-bold text-[#7c5cff] hover:underline">
               Register New Authority / Citizen

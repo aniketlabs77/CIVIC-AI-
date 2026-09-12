@@ -132,19 +132,19 @@ export default function Register() {
       <div className="w-full max-w-lg">
         {/* Branding header */}
         <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-[#7c5cff] flex items-center justify-center text-white text-xl font-black shadow-md mx-auto mb-3">
+          <div className="w-12 h-12 rounded-2xl bg-[#7c5cff] flex items-center justify-center text-white text-xl font-black shadow-md dark:shadow-none mx-auto mb-3">
             🏛️
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
             Create NagarSeva Account
           </h2>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Citizen Grievance Redressal & Department Administrative Portal
           </p>
         </div>
 
         {/* Card Container */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100/90">
+        <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/90">
           {/* Role Pill Switcher */}
           <div className="mb-5">
             <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2 text-center">
@@ -156,8 +156,8 @@ export default function Register() {
                 onClick={() => handleRoleChange('CITIZEN')}
                 className={`py-2 px-3 rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 ${
                   selectedRole === 'CITIZEN'
-                    ? 'bg-white text-gray-900 shadow-xs'
-                    : 'text-gray-500 hover:text-gray-900'
+                    ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-xs'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100'
                 }`}
               >
                 <span>👤</span> Citizen Account
@@ -168,7 +168,7 @@ export default function Register() {
                 className={`py-2 px-3 rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 ${
                   selectedRole === 'ADMIN'
                     ? 'bg-[#7c5cff] text-white shadow-xs'
-                    : 'text-gray-500 hover:text-gray-900'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100'
                 }`}
               >
                 <span>🛡️</span> Municipal Official
@@ -183,14 +183,14 @@ export default function Register() {
                 <span className="text-base">{activeDeptInfo.icon}</span>
                 <span className="font-extrabold text-violet-950">{activeDeptInfo.name}</span>
               </div>
-              <p className="text-[11px] text-gray-600 leading-relaxed">
+              <p className="text-[11px] text-gray-600 dark:text-gray-400 leading-relaxed">
                 {activeDeptInfo.description}
               </p>
             </div>
           ) : (
-            <div className="mb-5 p-3 rounded-2xl border border-gray-200 bg-gray-50 text-xs text-gray-700">
-              <p className="font-bold text-gray-900 mb-0.5">👤 Citizen Registration:</p>
-              <p className="text-[11px] text-gray-500">
+            <div className="mb-5 p-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-xs text-gray-700 dark:text-gray-300">
+              <p className="font-bold text-gray-900 dark:text-gray-100 mb-0.5">👤 Citizen Registration:</p>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400">
                 Report local civic grievances, upload photo evidence, and receive real-time resolution updates.
               </p>
             </div>
@@ -208,7 +208,7 @@ export default function Register() {
             {selectedRole === 'ADMIN' && (
               <>
                 <div>
-                  <label htmlFor="reg-department" className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1 flex items-center justify-between">
+                  <label htmlFor="reg-department" className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1 flex items-center justify-between">
                     <span>🏛️ Municipal Department</span>
                     <span className="text-[10px] text-[#7c5cff] font-semibold">Select jurisdiction</span>
                   </label>
@@ -216,7 +216,7 @@ export default function Register() {
                     id="reg-department"
                     value={selectedDepartment}
                     onChange={(e) => handleDepartmentChange(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-gray-100 focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
                   >
                     {MUNICIPAL_DEPARTMENTS.map((dept) => (
                       <option key={dept.id} value={dept.name}>
@@ -227,7 +227,7 @@ export default function Register() {
                 </div>
 
                 <div>
-                  <label htmlFor="designation" className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">
+                  <label htmlFor="designation" className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1">
                     Official Designation / Badge ID (Optional)
                   </label>
                   <input
@@ -236,7 +236,7 @@ export default function Register() {
                     type="text"
                     value={designation}
                     onChange={(e) => setDesignation(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-gray-100 focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
                     placeholder="e.g. Executive Engineer, Food Inspector #402, SI Traffic"
                   />
                 </div>
@@ -244,7 +244,7 @@ export default function Register() {
             )}
 
             <div>
-              <label htmlFor="name" className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">
+              <label htmlFor="name" className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1">
                 Full Name
               </label>
               <input
@@ -254,13 +254,13 @@ export default function Register() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
+                className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-gray-100 focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
                 placeholder={selectedRole === 'ADMIN' ? 'Officer Ramesh Sharma' : 'Ramesh Kumar'}
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">
+              <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1">
                 {selectedRole === 'ADMIN' ? 'Official Department Email' : 'Email Address'}
               </label>
               <input
@@ -271,14 +271,14 @@ export default function Register() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
+                className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-gray-100 focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
                 placeholder={selectedRole === 'ADMIN' ? activeDeptInfo.email : 'citizen@example.com'}
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">
+                <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1">
                   Password
                 </label>
                 <input
@@ -288,13 +288,13 @@ export default function Register() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-gray-100 focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
                   placeholder="••••••••"
                 />
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">
+                <label htmlFor="confirmPassword" className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1">
                   Confirm
                 </label>
                 <input
@@ -304,7 +304,7 @@ export default function Register() {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-gray-100 focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
                   placeholder="••••••••"
                 />
               </div>
@@ -314,7 +314,7 @@ export default function Register() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-full bg-gray-900 hover:bg-black text-white text-xs sm:text-sm font-bold shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 px-4 rounded-full bg-gray-900 hover:bg-black text-white text-xs sm:text-sm font-bold shadow-md dark:shadow-none transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {loading ? (
                   <>
@@ -330,7 +330,7 @@ export default function Register() {
             </div>
           </form>
 
-          <div className="mt-6 text-center text-xs text-gray-500">
+          <div className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
             Already have an account?{' '}
             <Link to="/login" className="font-bold text-[#7c5cff] hover:underline">
               Sign in to Portal

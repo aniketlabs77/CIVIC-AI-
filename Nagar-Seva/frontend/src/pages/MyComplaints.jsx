@@ -1,25 +1,40 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../api/apiClient';
+import { useAuth } from '../context/AuthContext';
 
 export default function MyComplaints() {
+  const { user } = useAuth();
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState('');
 
   useEffect(() => {
-    fetchMyComplaints();
-  }, []);
+    const delayDebounceFn = setTimeout(() => {
+      fetchMyComplaints();
+    }, 300);
+    return () => clearTimeout(delayDebounceFn);
+  }, [filterStatus, searchQuery, dateFrom, dateTo, filterDepartment]);
 
   const fetchMyComplaints = async () => {
     setLoading(true);
     setError('');
     try {
       let data = [];
+      const params = {};
+      if (filterStatus !== 'ALL') params.status = filterStatus;
+      if (searchQuery.trim()) params.keyword = searchQuery.trim();
+      if (dateFrom) params.dateFrom = dateFrom;
+      if (dateTo) params.dateTo = dateTo;
+      if (filterDepartment.trim()) params.department = filterDepartment.trim();
+
       try {
-        const response = await apiClient.get('/api/complaints/my');
+        const response = await apiClient.get('/api/complaints/my', { params });
         data = response.data || [];
       } catch (myErr) {
         console.warn('Fallback to /api/complaints:', myErr);
@@ -76,7 +91,7 @@ export default function MyComplaints() {
       case 'ESCALATED':
         return 'bg-rose-50 text-rose-800 border border-rose-200 font-bold';
       default:
-        return 'bg-gray-50 text-gray-700 border border-gray-200';
+        return 'bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700';
     }
   };
 
@@ -93,49 +108,72 @@ export default function MyComplaints() {
 
   const safeComplaints = Array.isArray(complaints) ? complaints : [];
 
-  const filteredComplaints = useMemo(() => {
-    return safeComplaints.filter((c) => {
-      if (filterStatus !== 'ALL' && c.status !== filterStatus) return false;
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        const catMatch = (c.category || '').toLowerCase().includes(query);
-        const descMatch = (c.description || '').toLowerCase().includes(query);
-        const locMatch = (c.location || '').toLowerCase().includes(query);
-        const idMatch = String(c.id || '').includes(query);
-        return catMatch || descMatch || locMatch || idMatch;
-      }
-      return true;
-    });
-  }, [safeComplaints, filterStatus, searchQuery]);
-
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12">
       {/* Header Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-100 dark:border-gray-700">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-violet-50 border border-violet-200 rounded-full text-violet-700 text-xs font-bold mb-1.5">
-            <span>📋</span>
-            <span>Citizen Grievance Tracker</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-violet-50 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-800/50 rounded-full text-violet-700 dark:text-violet-400 text-xs font-bold mb-1.5">
+            <span>👤</span>
+            <span>{user?.name || user?.email || 'Citizen'}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-            My Reported Grievances
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
+            My Complaints History
           </h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-            Track real-time progress, municipal routing & verified repair proofs for your submissions
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Track the resolution status of all issues you have reported.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Link
-            to="/report"
-            className="px-4 py-2 bg-[#7c5cff] hover:bg-[#6949f5] text-white text-xs font-bold rounded-full shadow-sm transition inline-flex items-center gap-1.5"
-          >
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Notification Toggle */}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full shadow-xs">
+            <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+              Email Alerts:
+            </span>
+            <button
+              onClick={async () => {
+                try {
+                  const newVal = !(user.notificationsEnabled ?? true);
+                  await apiClient.post('/api/auth/sync-profile', { notificationsEnabled: newVal });
+                  window.location.reload(); // Simple reload to refresh context
+                } catch (e) {
+                  console.error('Failed to update preference', e);
+                }
+              }}
+              className={`w-8 h-4 flex items-center rounded-full p-0.5 transition-colors ${
+                (user.notificationsEnabled ?? true) ? 'bg-[#7c5cff]' : 'bg-gray-300 dark:bg-gray-600'
+              }`}
+            >
+              <div className={`w-3 h-3 bg-white rounded-full shadow-sm transform transition-transform ${
+                (user.notificationsEnabled ?? true) ? 'translate-x-4' : 'translate-x-0'
+              }`}></div>
+            </button>
+          </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => window.open('http://localhost:8080/api/complaints/export?format=csv', '_blank')}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-full shadow-sm dark:shadow-none transition inline-flex items-center gap-1.5"
+              >
+                <span>📄</span> CSV
+              </button>
+              <button
+                onClick={() => window.open('http://localhost:8080/api/complaints/export?format=pdf', '_blank')}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-full shadow-sm dark:shadow-none transition inline-flex items-center gap-1.5"
+              >
+                <span>📑</span> PDF
+              </button>
+            </div>
+            <Link
+              to="/report"
+              className="px-4 py-2 bg-[#7c5cff] hover:bg-[#6949f5] text-white text-xs font-bold rounded-full shadow-sm dark:shadow-none transition inline-flex items-center gap-1.5"
+            >
             <span>➕</span>
-            <span>File New Grievance</span>
+            <span>New Issue</span>
           </Link>
           <button
             onClick={fetchMyComplaints}
-            className="px-3.5 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-bold rounded-full transition shadow-xs"
+            className="px-3.5 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:bg-gray-900 text-xs font-bold rounded-full transition shadow-xs"
           >
             🔄 Refresh
           </button>
@@ -143,7 +181,7 @@ export default function MyComplaints() {
       </div>
 
       {/* Search and Filter Controls */}
-      <div className="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white dark:bg-gray-800 p-3.5 rounded-2xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Search */}
         <div className="relative flex-1">
           <input
@@ -151,21 +189,48 @@ export default function MyComplaints() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search your complaints by ticket #, category, or landmark..."
-            className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
+            className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
           />
           <span className="absolute left-3 top-2.5 text-gray-400 text-xs">🔍</span>
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-2 text-gray-400 hover:text-gray-600 text-xs"
+              className="absolute right-3 top-2 text-gray-400 hover:text-gray-600 dark:text-gray-400 text-xs"
             >
               ✕
             </button>
           )}
         </div>
 
-        {/* Status Filter Pills */}
         <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+          <select
+            value={filterDepartment}
+            onChange={(e) => setFilterDepartment(e.target.value)}
+            className="px-3 py-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs focus:outline-none"
+          >
+            <option value="">All Departments</option>
+            <option value="Electricity Department">Electricity</option>
+            <option value="Water Board">Water Board</option>
+            <option value="Roads & Highways">Roads</option>
+            <option value="Sanitation">Sanitation</option>
+            <option value="Police">Police</option>
+          </select>
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="px-3 py-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs focus:outline-none"
+            title="From Date"
+          />
+          <span className="text-gray-400 text-xs">-</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="px-3 py-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs focus:outline-none mr-2"
+            title="To Date"
+          />
+
           {['ALL', 'OPEN', 'IN_PROGRESS', 'RESOLVED'].map((st) => (
             <button
               key={st}
@@ -174,7 +239,7 @@ export default function MyComplaints() {
               className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                 filterStatus === st
                   ? 'bg-[#7c5cff] text-white shadow-xs'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100 hover:bg-gray-100'
               }`}
             >
               {st === 'ALL' ? 'All My Tickets' : st.replace('_', ' ')}
@@ -199,21 +264,21 @@ export default function MyComplaints() {
       {/* Complaints List */}
       {!loading && !error && (
         <div>
-          {filteredComplaints.length > 0 ? (
+          {safeComplaints.length > 0 ? (
             <div className="space-y-4">
-              {filteredComplaints.map((complaint) => (
+              {safeComplaints.map((complaint) => (
                 <div
                   key={complaint.id}
-                  className="bg-white rounded-2xl shadow-sm border border-gray-100/90 p-5 sm:p-6 transition hover:shadow-md"
+                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/90 p-5 sm:p-6 transition hover:shadow-md dark:shadow-none"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
                     <div className="flex items-start gap-3.5 min-w-0">
-                      <div className="w-11 h-11 rounded-2xl bg-gray-50 flex items-center justify-center text-xl shadow-xs border border-gray-100 shrink-0">
+                      <div className="w-11 h-11 rounded-2xl bg-gray-50 dark:bg-gray-900 flex items-center justify-center text-xl shadow-xs border border-gray-100 dark:border-gray-700 shrink-0">
                         {getCategoryIcon(complaint.category)}
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-base font-extrabold text-gray-900">
+                          <span className="text-base font-extrabold text-gray-900 dark:text-gray-100">
                             {complaint.category || 'Grievance'}
                           </span>
                           <span className="text-xs font-bold text-gray-400">
@@ -230,7 +295,7 @@ export default function MyComplaints() {
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1">
                           <span>📍</span>
                           <span>{complaint.location || 'Location Not Specified'}</span>
                         </p>
@@ -250,7 +315,7 @@ export default function MyComplaints() {
                       <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">
                         Reported Details
                       </p>
-                      <p className="text-xs text-gray-700 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-100 min-h-[60px]">
+                      <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-900 p-3 rounded-xl border border-gray-100 dark:border-gray-700 min-h-[60px]">
                         {complaint.description || 'No description available.'}
                       </p>
                     </div>
@@ -259,11 +324,11 @@ export default function MyComplaints() {
                       <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">
                         Department & Automated Routing
                       </p>
-                      <div className="text-xs text-gray-700 bg-violet-50/50 p-3 rounded-xl border border-violet-100/80 min-h-[60px]">
+                      <div className="text-xs text-gray-700 dark:text-gray-300 bg-violet-50/50 p-3 rounded-xl border border-violet-100/80 min-h-[60px]">
                         <p className="font-semibold text-violet-900 mb-0.5">
                           🏢 {complaint.routedAuthority || 'Municipal Department Assigned'}
                         </p>
-                        <p className="text-gray-600 text-[11px]">
+                        <p className="text-gray-600 dark:text-gray-400 text-[11px]">
                           {complaint.aiSummary || 'Automated classification dispatched to department field officers.'}
                         </p>
                       </div>
@@ -272,16 +337,16 @@ export default function MyComplaints() {
 
                   {/* Photos */}
                   {complaint.photoData && (
-                    <div className="mt-4 pt-3 border-t border-gray-100 flex items-start gap-4">
+                    <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-start gap-4">
                       <img
                         src={complaint.photoData}
                         alt="Citizen Evidence"
-                        className="w-24 h-20 object-cover rounded-xl border border-gray-200 shadow-xs shrink-0"
+                        className="w-24 h-20 object-cover rounded-xl border border-gray-200 dark:border-gray-700 shadow-xs shrink-0"
                       />
-                      <div className="text-xs text-gray-600">
-                        <span className="font-bold text-gray-800">Submitted Photo Evidence</span>
+                      <div className="text-xs text-gray-600 dark:text-gray-400">
+                        <span className="font-bold text-gray-800 dark:text-gray-200">Submitted Photo Evidence</span>
                         {complaint.imageVerificationNote && (
-                          <p className="text-[11px] text-gray-500 italic mt-0.5">
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 italic mt-0.5">
                             🤖 AI Vision: {complaint.imageVerificationNote}
                           </p>
                         )}
@@ -302,6 +367,9 @@ export default function MyComplaints() {
                             Officer Note: {complaint.resolutionNote}
                           </p>
                         )}
+                        <p className="text-[10px] text-emerald-700/70 mt-1 italic">
+                          We emailed you about this update on {formatDate(complaint.resolvedAt || complaint.updatedAt)}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -309,15 +377,15 @@ export default function MyComplaints() {
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100 text-xs text-gray-400 space-y-3">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 text-center shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700 text-xs text-gray-400 space-y-3">
               <div className="text-3xl">📝</div>
-              <p className="font-semibold text-gray-700 text-sm">No grievances reported yet</p>
+              <p className="font-semibold text-gray-700 dark:text-gray-300 text-sm">No grievances reported yet</p>
               <p className="text-gray-400 max-w-sm mx-auto">
                 Any civic issue you report with photo evidence or location pin will appear here with live tracking updates.
               </p>
               <Link
                 to="/report"
-                className="inline-block mt-2 px-4 py-2 bg-[#7c5cff] text-white font-bold text-xs rounded-full shadow-sm hover:bg-[#6949f5] transition"
+                className="inline-block mt-2 px-4 py-2 bg-[#7c5cff] text-white font-bold text-xs rounded-full shadow-sm dark:shadow-none hover:bg-[#6949f5] transition"
               >
                 Report an Issue Now →
               </Link>

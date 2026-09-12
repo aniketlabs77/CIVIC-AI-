@@ -13,8 +13,10 @@ import {
   Pie,
   Cell
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 export default function PublicDashboard() {
+  const { t } = useTranslation();
   const [complaints, setComplaints] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -69,7 +71,7 @@ export default function PublicDashboard() {
       case 'ESCALATED':
         return 'bg-rose-50 text-rose-800 border border-rose-200 font-bold';
       default:
-        return 'bg-gray-50 text-gray-700 border border-gray-200';
+        return 'bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700';
     }
   };
 
@@ -145,15 +147,15 @@ export default function PublicDashboard() {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 rounded-xl shadow-md border border-gray-100 text-xs space-y-1">
-          <p className="font-bold text-gray-900">{label}</p>
+        <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-md dark:shadow-none border border-gray-100 dark:border-gray-700 text-xs space-y-1">
+          <p className="font-bold text-gray-900 dark:text-gray-100">{label}</p>
           {payload.map((entry, index) => (
-            <div key={`item-${index}`} className="flex items-center justify-between gap-4 text-gray-600">
+            <div key={`item-${index}`} className="flex items-center justify-between gap-4 text-gray-600 dark:text-gray-400">
               <span className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.fill || entry.color }}></span>
                 {entry.name === 'total' ? 'Total Complaints' : 'Resolved'}
               </span>
-              <span className="font-bold text-gray-900">{entry.value}</span>
+              <span className="font-bold text-gray-900 dark:text-gray-100">{entry.value}</span>
             </div>
           ))}
         </div>
@@ -165,17 +167,17 @@ export default function PublicDashboard() {
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
       {/* Top Header Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-100 dark:border-gray-700">
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-violet-50 border border-violet-200 rounded-full text-violet-700 text-xs font-bold mb-1.5">
             <span>📊</span>
             <span>Civic Intelligence & Municipal Operations</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-            City Civic Dashboard
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
+            {t('dashTitle')}
           </h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-            Real-time public grievance resolution metrics, ward leaderboards & SLA performance
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            {t('dashSubtitle')}
           </p>
         </div>
 
@@ -183,16 +185,16 @@ export default function PublicDashboard() {
         <div className="flex items-center gap-2">
           <Link
             to="/report"
-            className="px-4 py-2 bg-[#7c5cff] hover:bg-[#6949f5] text-white text-xs font-bold rounded-full shadow-sm transition inline-flex items-center gap-1.5"
+            className="px-4 py-2 bg-[#7c5cff] hover:bg-[#6949f5] text-white text-xs font-bold rounded-full shadow-sm dark:shadow-none transition inline-flex items-center gap-1.5"
           >
             <span>➕</span>
-            <span>Report Grievance</span>
+            <span>{t('reportGrievanceBtn')}</span>
           </Link>
           <button
             onClick={fetchDashboardData}
-            className="px-3.5 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-bold rounded-full transition shadow-xs"
+            className="px-3.5 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 text-xs font-bold rounded-full transition shadow-xs"
           >
-            🔄 Refresh
+            🔄 {t('refreshBtn')}
           </button>
         </div>
       </div>
@@ -206,7 +208,7 @@ export default function PublicDashboard() {
       {/* Top Stat Cards Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* Total Inflow */}
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-5 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
               Total Inflow
@@ -215,14 +217,14 @@ export default function PublicDashboard() {
               Live
             </span>
           </div>
-          <div className="text-3xl font-black text-gray-900 mt-1 tracking-tight">
+          <div className="text-3xl font-black text-gray-900 dark:text-gray-100 mt-1 tracking-tight">
             {totalCount}
           </div>
           <p className="text-xs text-gray-400 mt-0.5">Total registered tickets</p>
         </div>
 
         {/* Resolved */}
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-emerald-100">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-5 shadow-sm dark:shadow-none border border-emerald-100">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">
               Resolved Issues
@@ -238,7 +240,7 @@ export default function PublicDashboard() {
         </div>
 
         {/* Active In Progress */}
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-amber-100">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-5 shadow-sm dark:shadow-none border border-amber-100">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider">
               Active Pending
@@ -254,7 +256,7 @@ export default function PublicDashboard() {
         </div>
 
         {/* Escalated Alerts */}
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-rose-100">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-5 shadow-sm dark:shadow-none border border-rose-100">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-rose-600 uppercase tracking-wider">
               Escalated Alerts
@@ -273,17 +275,17 @@ export default function PublicDashboard() {
       {/* Main Charts & Activity Row */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left 8 Columns: Main Ward Volume Chart Card */}
-        <div className="lg:col-span-8 bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between">
+        <div className="lg:col-span-8 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700 flex flex-col justify-between">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
             <div>
-              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 tracking-tight">
+              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
                 Civic Inflow vs Resolution by Ward
               </h2>
               <p className="text-xs text-gray-400">
                 Total registered grievances vs completed repairs
               </p>
             </div>
-            <div className="flex items-center gap-4 text-xs font-semibold text-gray-500">
+            <div className="flex items-center gap-4 text-xs font-semibold text-gray-500 dark:text-gray-400">
               <span className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#7c5cff]"></span> Total
               </span>
@@ -317,9 +319,9 @@ export default function PublicDashboard() {
         </div>
 
         {/* Right 4 Columns: Recent Alerts List Panel */}
-        <div className="lg:col-span-4 bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col">
+        <div className="lg:col-span-4 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700 flex flex-col">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
+            <h2 className="text-base font-extrabold text-gray-900 dark:text-gray-100 tracking-tight flex items-center gap-2">
               <span>Recent Grievances</span>
               <span className="w-2 h-2 rounded-full bg-[#7c5cff] animate-pulse"></span>
             </h2>
@@ -332,14 +334,14 @@ export default function PublicDashboard() {
             {safeComplaints.slice(0, 5).map((c) => (
               <div
                 key={c.id}
-                className="p-3 rounded-xl bg-gray-50 hover:bg-gray-100/80 transition flex items-center justify-between gap-3"
+                className="p-3 rounded-xl bg-gray-50 dark:bg-gray-900 hover:bg-gray-100/80 transition flex items-center justify-between gap-3"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-white shadow-xs border border-gray-100 flex items-center justify-center text-sm shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-white dark:bg-gray-800 shadow-xs border border-gray-100 dark:border-gray-700 flex items-center justify-center text-sm shrink-0">
                     {getCategoryIcon(c.category)}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-gray-900 truncate">
+                    <p className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate">
                       {c.category || 'Grievance'}
                     </p>
                     <p className="text-[11px] text-gray-400 truncate">
@@ -365,9 +367,9 @@ export default function PublicDashboard() {
       {/* Bottom Row: Resolution Efficiency Gauge & Ward Ranking */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left 4 Columns: Radial Resolution Gauge Card */}
-        <div className="lg:col-span-4 bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center justify-between text-center">
+        <div className="lg:col-span-4 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-between text-center">
           <div className="w-full flex items-center justify-between">
-            <h2 className="text-base font-extrabold text-gray-900 tracking-tight">
+            <h2 className="text-base font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
               Resolution Efficiency
             </h2>
             <span className="text-xs font-bold text-[#7c5cff] bg-violet-50 px-2.5 py-0.5 rounded-full border border-violet-100">
@@ -395,7 +397,7 @@ export default function PublicDashboard() {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute bottom-2 flex flex-col items-center">
-              <span className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+              <span className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
                 {overallResolutionRate}%
               </span>
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
@@ -404,16 +406,16 @@ export default function PublicDashboard() {
             </div>
           </div>
 
-          <p className="text-xs text-gray-500 px-2">
+          <p className="text-xs text-gray-500 dark:text-gray-400 px-2">
             Percentage of municipal grievances remediated within the SLA window.
           </p>
         </div>
 
         {/* Right 8 Columns: Ward Ranking Table */}
-        <div className="lg:col-span-8 bg-white rounded-2xl p-6 shadow-sm border border-gray-100 overflow-hidden">
+        <div className="lg:col-span-8 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700 overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-base font-extrabold text-gray-900 tracking-tight">
+              <h2 className="text-base font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
                 Ward Resolution Leaderboard
               </h2>
               <p className="text-xs text-gray-400">
@@ -428,7 +430,7 @@ export default function PublicDashboard() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                <tr className="border-b border-gray-100 dark:border-gray-700 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                   <th className="pb-3 pl-2">Rank</th>
                   <th className="pb-3">Ward</th>
                   <th className="pb-3 text-center">Total</th>
@@ -439,17 +441,17 @@ export default function PublicDashboard() {
               </thead>
               <tbody className="divide-y divide-gray-50 text-xs font-medium">
                 {wardRanking.map((item, idx) => (
-                  <tr key={item.ward} className="hover:bg-gray-50/80 transition">
-                    <td className="py-3.5 pl-2 font-bold text-gray-900">
+                  <tr key={item.ward} className="hover:bg-gray-50 dark:bg-gray-900/80 transition">
+                    <td className="py-3.5 pl-2 font-bold text-gray-900 dark:text-gray-100">
                       <span className={`w-6 h-6 rounded-full inline-flex items-center justify-center text-[11px] ${
                         idx === 0 ? 'bg-amber-100 text-amber-800 font-bold' :
-                        idx === 1 ? 'bg-slate-100 text-slate-800' : 'text-gray-500'
+                        idx === 1 ? 'bg-slate-100 text-slate-800' : 'text-gray-500 dark:text-gray-400'
                       }`}>
                         #{idx + 1}
                       </span>
                     </td>
-                    <td className="py-3.5 font-bold text-gray-900">{item.ward}</td>
-                    <td className="py-3.5 text-center text-gray-600 font-semibold">{item.total}</td>
+                    <td className="py-3.5 font-bold text-gray-900 dark:text-gray-100">{item.ward}</td>
+                    <td className="py-3.5 text-center text-gray-600 dark:text-gray-400 font-semibold">{item.total}</td>
                     <td className="py-3.5 text-center text-emerald-600 font-semibold">{item.resolved}</td>
                     <td className="py-3.5">
                       <div className="flex items-center gap-2">
@@ -459,12 +461,12 @@ export default function PublicDashboard() {
                             style={{ width: `${Math.min(100, Math.max(5, item.resolutionRate))}%` }}
                           ></div>
                         </div>
-                        <span className="text-xs font-bold text-gray-800 w-10 text-right">
+                        <span className="text-xs font-bold text-gray-800 dark:text-gray-200 w-10 text-right">
                           {item.resolutionRate.toFixed(0)}%
                         </span>
                       </div>
                     </td>
-                    <td className="py-3.5 text-right pr-2 text-gray-500 font-semibold">
+                    <td className="py-3.5 text-right pr-2 text-gray-500 dark:text-gray-400 font-semibold">
                       {item.avgResolutionTimeHours > 0
                         ? `${item.avgResolutionTimeHours.toFixed(1)}h`
                         : 'N/A'}
@@ -478,10 +480,10 @@ export default function PublicDashboard() {
       </div>
 
       {/* Filtered Complaints Feed */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
-            <h2 className="text-base font-extrabold text-gray-900 tracking-tight">
+            <h2 className="text-base font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
               Live Civic Complaints Feed
             </h2>
             <p className="text-xs text-gray-400">
@@ -490,7 +492,7 @@ export default function PublicDashboard() {
           </div>
 
           {/* Filter Pills */}
-          <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-full border border-gray-100 overflow-x-auto">
+          <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-900 p-1 rounded-full border border-gray-100 dark:border-gray-700 overflow-x-auto">
             {['ALL', 'OPEN', 'IN_PROGRESS', 'RESOLVED', 'ESCALATED'].map((st) => (
               <button
                 key={st}
@@ -499,7 +501,7 @@ export default function PublicDashboard() {
                 className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                   filterStatus === st
                     ? 'bg-[#7c5cff] text-white shadow-xs'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100 hover:bg-gray-100'
                 }`}
               >
                 {st === 'ALL' ? 'All Status' : st.replace('_', ' ')}
@@ -518,15 +520,15 @@ export default function PublicDashboard() {
             {filteredComplaints.map((c) => (
               <div
                 key={c.id}
-                className="p-4 rounded-xl bg-gray-50 hover:bg-gray-100/80 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900 hover:bg-gray-100/80 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4"
               >
                 <div className="flex items-start gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-white shadow-xs border border-gray-100 flex items-center justify-center text-lg shrink-0 mt-0.5">
+                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-xs border border-gray-100 dark:border-gray-700 flex items-center justify-center text-lg shrink-0 mt-0.5">
                     {getCategoryIcon(c.category)}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-extrabold text-sm text-gray-900">
+                      <span className="font-extrabold text-sm text-gray-900 dark:text-gray-100">
                         {c.category || 'Grievance'}
                       </span>
                       <span className="text-xs text-gray-400 font-medium">
@@ -543,7 +545,7 @@ export default function PublicDashboard() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-600 mt-1 line-clamp-1">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-1">
                       {c.description || 'No description provided.'}
                     </p>
                     {c.aiSummary && (

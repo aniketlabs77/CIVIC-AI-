@@ -33,6 +33,7 @@ export function AuthProvider({ children }) {
         email: profile.email || fbUser.email,
         department: profile.department || null,
         firebaseUid: fbUser.uid,
+        notificationsEnabled: profile.notificationsEnabled ?? true,
       };
       setUser(combinedUser);
       return combinedUser;
@@ -45,6 +46,7 @@ export function AuthProvider({ children }) {
         email: fbUser.email,
         department: null,
         firebaseUid: fbUser.uid,
+        notificationsEnabled: true,
       };
       setUser(fallbackUser);
       return fallbackUser;
@@ -61,6 +63,7 @@ export function AuthProvider({ children }) {
       role: isRoleAdmin ? 'ADMIN' : 'CITIZEN',
       department: dept,
       id: isRoleAdmin ? 1 : 2,
+      notificationsEnabled: true,
     };
     try {
       localStorage.setItem('nagarseva_demo_user', JSON.stringify(demoUser));

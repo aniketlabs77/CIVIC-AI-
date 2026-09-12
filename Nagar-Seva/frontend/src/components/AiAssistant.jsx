@@ -89,7 +89,7 @@ export default function AiAssistant() {
           className="flex items-center gap-3 px-5 py-3.5 bg-gradient-to-r from-[#7c5cff] via-[#6d4df5] to-[#4f46e5] hover:from-[#6d4df5] hover:to-[#4338ca] text-white rounded-full shadow-[0_10px_30px_rgba(124,92,255,0.45)] ring-2 ring-white/30 hover:scale-105 transform transition-all duration-200 cursor-pointer"
           aria-label="Open Civic AI Assistant"
         >
-          <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-sm font-black text-white shadow-inner">
+          <div className="w-7 h-7 rounded-full bg-white dark:bg-gray-800/20 flex items-center justify-center text-sm font-black text-white shadow-inner">
             ✨
           </div>
           <span className="font-extrabold text-sm tracking-wide text-white drop-shadow-xs">
@@ -104,11 +104,11 @@ export default function AiAssistant() {
 
       {/* Expanded Chat Drawer */}
       {isOpen && (
-        <div className="w-[360px] sm:w-[420px] h-[580px] max-h-[85vh] bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.35)] border border-gray-200 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200 ring-1 ring-black/5">
+        <div className="w-[360px] sm:w-[420px] h-[580px] max-h-[85vh] bg-white dark:bg-gray-800 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.35)] border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200 ring-1 ring-black/5">
           {/* Header */}
-          <div className="px-5 py-4 bg-gradient-to-r from-[#7c5cff] via-[#6d4df5] to-[#4f46e5] text-white flex items-center justify-between shadow-md">
+          <div className="px-5 py-4 bg-gradient-to-r from-[#7c5cff] via-[#6d4df5] to-[#4f46e5] text-white flex items-center justify-between shadow-md dark:shadow-none">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-lg shadow-inner text-white">
+              <div className="w-10 h-10 rounded-2xl bg-white dark:bg-gray-800/20 backdrop-blur flex items-center justify-center text-lg shadow-inner text-white">
                 ✨
               </div>
               <div>
@@ -123,7 +123,7 @@ export default function AiAssistant() {
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/30 flex items-center justify-center text-white transition text-xs font-bold"
+              className="w-8 h-8 rounded-full bg-white dark:bg-gray-800/15 hover:bg-white dark:bg-gray-800/30 flex items-center justify-center text-white transition text-xs font-bold"
               aria-label="Close Assistant"
             >
               ✕
@@ -138,10 +138,10 @@ export default function AiAssistant() {
                 className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 text-xs sm:text-sm leading-relaxed shadow-sm ${
+                  className={`max-w-[85%] rounded-2xl px-4 py-3 text-xs sm:text-sm leading-relaxed shadow-sm dark:shadow-none ${
                     msg.role === 'user'
                       ? 'bg-[#7c5cff] text-white rounded-br-xs font-medium'
-                      : 'bg-white text-gray-900 border border-gray-200/80 rounded-bl-xs'
+                      : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700/80 rounded-bl-xs'
                   }`}
                 >
                   <div className="whitespace-pre-line">
@@ -156,7 +156,7 @@ export default function AiAssistant() {
 
             {loading && (
               <div className="flex items-start gap-2">
-                <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-xs px-4 py-3 shadow-xs flex items-center gap-2">
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl rounded-bl-xs px-4 py-3 shadow-xs flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-[#7c5cff] animate-bounce"></div>
                   <div className="w-2 h-2 rounded-full bg-[#7c5cff] animate-bounce [animation-delay:0.2s]"></div>
                   <div className="w-2 h-2 rounded-full bg-[#7c5cff] animate-bounce [animation-delay:0.4s]"></div>
@@ -167,7 +167,7 @@ export default function AiAssistant() {
           </div>
 
           {/* Quick Prompts */}
-          <div className="px-3 py-2.5 bg-white border-t border-gray-100 overflow-x-auto whitespace-nowrap scrollbar-none flex gap-1.5">
+          <div className="px-3 py-2.5 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 overflow-x-auto whitespace-nowrap scrollbar-none flex gap-1.5">
             {quickPrompts.map((prompt, idx) => (
               <button
                 key={idx}
@@ -180,19 +180,19 @@ export default function AiAssistant() {
           </div>
 
           {/* Input Box */}
-          <div className="p-3.5 bg-white border-t border-gray-100 flex items-center gap-2">
+          <div className="p-3.5 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 flex items-center gap-2">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ask about municipal issues, routes, rules..."
-              className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-full text-xs sm:text-sm text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7c5cff] focus:border-[#7c5cff]"
+              className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-full text-xs sm:text-sm text-gray-900 dark:text-gray-100 focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#7c5cff] focus:border-[#7c5cff]"
             />
             <button
               onClick={() => handleSend()}
               disabled={!input.trim() || loading}
-              className="p-2.5 rounded-full bg-[#7c5cff] hover:bg-[#6d4df5] text-white disabled:opacity-40 transition shadow-sm"
+              className="p-2.5 rounded-full bg-[#7c5cff] hover:bg-[#6d4df5] text-white disabled:opacity-40 transition shadow-sm dark:shadow-none"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />

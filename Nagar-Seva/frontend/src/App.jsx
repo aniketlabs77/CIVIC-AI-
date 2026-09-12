@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Layout from './components/Layout';
 import ReportIssue from './pages/ReportIssue';
 import TrackComplaints from './pages/TrackComplaints';
@@ -69,83 +70,85 @@ function PublicOnlyRoute({ children }) {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Auth routes - only accessible when NOT signed in */}
-          <Route path="/login" element={
-            <PublicOnlyRoute>
-              <Login />
-            </PublicOnlyRoute>
-          } />
-          <Route path="/register" element={
-            <PublicOnlyRoute>
-              <Register />
-            </PublicOnlyRoute>
-          } />
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            {/* Auth routes - only accessible when NOT signed in */}
+            <Route path="/login" element={
+              <PublicOnlyRoute>
+                <Login />
+              </PublicOnlyRoute>
+            } />
+            <Route path="/register" element={
+              <PublicOnlyRoute>
+                <Register />
+              </PublicOnlyRoute>
+            } />
 
-          {/* Primary Dashboard Route - Adapts to Officer vs Citizen */}
-          <Route path="/" element={
-            <Layout>
-              <DashboardRoute />
-            </Layout>
-          } />
-
-          <Route path="/dashboard" element={
-            <Layout>
-              <DashboardRoute />
-            </Layout>
-          } />
-
-          {/* Explicit Officer Command Center Route */}
-          <Route path="/officer-dashboard" element={
-            <PrivateRoute allowedRoles={['ADMIN']}>
+            {/* Primary Dashboard Route - Adapts to Officer vs Citizen */}
+            <Route path="/" element={
               <Layout>
-                <MunicipalOfficerDashboard />
+                <DashboardRoute />
               </Layout>
-            </PrivateRoute>
-          } />
-          
-          <Route path="/safety" element={
-            <Layout>
-              <SafetyMap />
-            </Layout>
-          } />
+            } />
 
-          <Route path="/report" element={
-            <Layout>
-              <ReportIssue />
-            </Layout>
-          } />
-
-          <Route path="/track" element={
-            <Layout>
-              <TrackComplaints />
-            </Layout>
-          } />
-
-          {/* Protected User Pages */}
-          <Route path="/my-complaints" element={
-            <PrivateRoute allowedRoles={['CITIZEN', 'ADMIN']}>
+            <Route path="/dashboard" element={
               <Layout>
-                <MyComplaints />
+                <DashboardRoute />
               </Layout>
-            </PrivateRoute>
-          } />
+            } />
 
-          {/* Admin-only Routes */}
-          <Route path="/admin" element={
-            <PrivateRoute allowedRoles={['ADMIN']}>
+            {/* Explicit Officer Command Center Route */}
+            <Route path="/officer-dashboard" element={
+              <PrivateRoute allowedRoles={['ADMIN']}>
+                <Layout>
+                  <MunicipalOfficerDashboard />
+                </Layout>
+              </PrivateRoute>
+            } />
+            
+            <Route path="/safety" element={
               <Layout>
-                <AdminPanel />
+                <SafetyMap />
               </Layout>
-            </PrivateRoute>
-          } />
+            } />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+            <Route path="/report" element={
+              <Layout>
+                <ReportIssue />
+              </Layout>
+            } />
+
+            <Route path="/track" element={
+              <Layout>
+                <TrackComplaints />
+              </Layout>
+            } />
+
+            {/* Protected User Pages */}
+            <Route path="/my-complaints" element={
+              <PrivateRoute allowedRoles={['CITIZEN', 'ADMIN']}>
+                <Layout>
+                  <MyComplaints />
+                </Layout>
+              </PrivateRoute>
+            } />
+
+            {/* Admin-only Routes */}
+            <Route path="/admin" element={
+              <PrivateRoute allowedRoles={['ADMIN']}>
+                <Layout>
+                  <AdminPanel />
+                </Layout>
+              </PrivateRoute>
+            } />
+
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
