@@ -152,7 +152,7 @@ public class AuditService {
                                     String department, Object oldConfig, Object newConfig,
                                     HttpServletRequest request) {
         String compositeKey = category + "|" + department;
-        Long entityId = compositeKey.hashCode();
+        Long entityId = (long) compositeKey.hashCode();
         log(actorEmail, actorRole, "SLA_CONFIG_CHANGED", "SlaConfig", entityId,
                 oldConfig, newConfig, request, true, null);
     }

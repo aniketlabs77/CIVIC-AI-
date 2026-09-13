@@ -1,0 +1,23 @@
+{
+    "appTitle":  "NagarSeva",
+    "navDashboard":  "Dashboard",
+    "navCommand":  "??? Command Center",
+    "navSafety":  "Safety Map",
+    "navResolve":  "Resolve Issue",
+    "navReport":  "Report Issue",
+    "navMyIssues":  "My Complaints",
+    "navTrack":  "Track All",
+    "navLogout":  "Logout",
+    "navSignIn":  "Sign In",
+    "navSignUp":  "Sign Up",
+    "heroTitle":  "Smart Municipal Grievance Resolution",
+    "heroSubtitle":  "AI-powered, transparent, and accountable civic maintenance platform.",
+    "reportIssueNow":  "Report an Issue Now",
+    "trackStatus":  "Track Status",
+    "selectLanguage":  "Select Language",
+    "themeToggle":  "Toggle Theme",
+    "dashTitle":  "City Civic Dashboard",
+    "dashSubtitle":  "Real-time public grievance resolution metrics, ward leaderboards \u0026 SLA performance",
+    "reportGrievanceBtn":  "Report Grievance",
+    "refreshBtn":  "Refresh"
+}

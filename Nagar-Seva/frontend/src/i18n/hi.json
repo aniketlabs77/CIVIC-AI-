@@ -1,0 +1,19 @@
+{
+  "appTitle": "नगर सेवा",
+  "navDashboard": "डैशबोर्ड",
+  "navCommand": "नियंत्रण केंद्र",
+  "navLogout": "लॉग आउट",
+  "navLoginAdmin": "एडमिन लॉगिन",
+  "heroTitle": "नागरिक शिकायत मंच",
+  "heroSubtitle": "अपने क्षेत्र में समस्याओं की रिपोर्ट करें",
+  "heroAction": "शिकायत दर्ज करें",
+  "statTotal": "कुल शिकायतें",
+  "statResolved": "सुलझाई गई",
+  "statPending": "लंबित",
+  "statEscalated": "एस्केलेटेड",
+  "tableId": "टिकट आईडी",
+  "tableCategory": "श्रेणी",
+  "tableLocation": "स्थान",
+  "tableStatus": "स्थिति",
+  "tableAction": "कार्रवाई"
+}

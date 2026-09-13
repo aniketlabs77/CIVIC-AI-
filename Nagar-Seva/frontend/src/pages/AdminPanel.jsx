@@ -153,7 +153,7 @@ export default function AdminPanel() {
       case 'ESCALATED':
         return 'bg-rose-50 text-rose-800 border border-rose-200 font-bold';
       default:
-        return 'bg-gray-50 text-gray-700 border border-gray-200';
+        return 'bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700';
     }
   };
 
@@ -166,7 +166,7 @@ export default function AdminPanel() {
       case 'LOW':
         return 'bg-emerald-50 text-emerald-700 border border-emerald-100';
       default:
-        return 'bg-gray-50 text-gray-700 border border-gray-100';
+        return 'bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-gray-700';
     }
   };
 
@@ -342,17 +342,17 @@ export default function AdminPanel() {
       {/* ------------------------------------------------------------- */}
       {/* Official Header Banner & Top Controls */}
       {/* ------------------------------------------------------------- */}
-      <div className="bg-white rounded-3xl p-6 sm:p-7 shadow-sm border border-gray-100/90 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-7 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/90 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-violet-50 border border-violet-200 rounded-full text-xs font-bold text-violet-800 mb-2">
             <span>{activeDeptObj.icon}</span>
             <span>{activeDeptObj.name}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
             Municipal Department Operations
           </h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-            Logged in as <span className="font-bold text-gray-800">{user?.name || user?.email}</span> ({user?.email})
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Logged in as <span className="font-bold text-gray-800 dark:text-gray-200">{user?.name || user?.email}</span> ({user?.email})
           </p>
         </div>
 
@@ -363,7 +363,7 @@ export default function AdminPanel() {
                 const firstPending = filteredComplaints.find(c => c.status !== 'RESOLVED');
                 if (firstPending) handleOpenResolve(firstPending);
               }}
-              className="px-4 py-2 bg-gradient-to-r from-[#7c5cff] to-[#6366f1] hover:from-[#6949f5] hover:to-[#4f46e5] text-white text-xs font-bold rounded-full shadow-sm transition inline-flex items-center gap-1.5 cursor-pointer"
+              className="px-4 py-2 bg-gradient-to-r from-[#7c5cff] to-[#6366f1] hover:from-[#6949f5] hover:to-[#4f46e5] text-white text-xs font-bold rounded-full shadow-sm dark:shadow-none transition inline-flex items-center gap-1.5 cursor-pointer"
             >
               <span>✅</span>
               <span>Resolve Issue</span>
@@ -372,7 +372,7 @@ export default function AdminPanel() {
 
           <button
             onClick={handleRefreshAll}
-            className="px-4 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-xs font-bold text-gray-700 rounded-full shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-700 dark:text-gray-300 rounded-full shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer"
           >
             <span>🔄</span>
             <span>Refresh</span>
@@ -383,11 +383,11 @@ export default function AdminPanel() {
       {/* ------------------------------------------------------------- */}
       {/* Top Department Scope Selector (Filters BOTH Tabs) */}
       {/* ------------------------------------------------------------- */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="text-base">🏛️</span>
           <div>
-            <p className="text-xs font-bold text-gray-800 uppercase tracking-wider">Department Jurisdiction Scope</p>
+            <p className="text-xs font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider">Department Jurisdiction Scope</p>
             <p className="text-[11px] text-gray-400">Filters KPIs, charts, escalated tickets, and queue</p>
           </div>
         </div>
@@ -396,7 +396,7 @@ export default function AdminPanel() {
           <select
             value={departmentFilter}
             onChange={(e) => setDepartmentFilter(e.target.value)}
-            className="px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7c5cff] cursor-pointer"
+            className="px-3.5 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#7c5cff] cursor-pointer"
           >
             <option value="AUTO">🎯 My Department ({activeDeptObj.category})</option>
             <option value="ALL">🌐 All Municipal Departments ({safeComplaints.length})</option>
@@ -412,13 +412,13 @@ export default function AdminPanel() {
       {/* ------------------------------------------------------------- */}
       {/* Tab Switcher: Overview vs Ticket Queue */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+      <div className="flex items-center gap-2 border-b border-gray-100 dark:border-gray-700 pb-2">
         <button
           onClick={() => setActiveTab('overview')}
           className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-2 ${
             activeTab === 'overview'
-              ? 'bg-[#7c5cff] text-white shadow-sm'
-              : 'bg-white hover:bg-gray-50 text-gray-600 border border-gray-200'
+              ? 'bg-[#7c5cff] text-white shadow-sm dark:shadow-none'
+              : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700'
           }`}
         >
           <span>📊</span>
@@ -429,15 +429,15 @@ export default function AdminPanel() {
           onClick={() => setActiveTab('queue')}
           className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-2 ${
             activeTab === 'queue'
-              ? 'bg-[#7c5cff] text-white shadow-sm'
-              : 'bg-white hover:bg-gray-50 text-gray-600 border border-gray-200'
+              ? 'bg-[#7c5cff] text-white shadow-sm dark:shadow-none'
+              : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700'
           }`}
         >
           <span>📋</span>
           <span>Ticket Queue</span>
           <span
             className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-              activeTab === 'queue' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
+              activeTab === 'queue' ? 'bg-white dark:bg-gray-800/20 text-white' : 'bg-gray-100 text-gray-600 dark:text-gray-400'
             }`}
           >
             {filteredComplaints.length}
@@ -453,7 +453,7 @@ export default function AdminPanel() {
           {statsLoading && !stats && (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
               <div className="w-10 h-10 border-4 border-[#7c5cff] border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-xs font-semibold text-gray-500">Loading municipal analytics & statistics...</p>
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Loading municipal analytics & statistics...</p>
             </div>
           )}
 
@@ -462,7 +462,7 @@ export default function AdminPanel() {
               <span className="font-semibold">⚠️ {statsError}</span>
               <button
                 onClick={fetchAdminStats}
-                className="px-3 py-1 bg-white border border-rose-200 rounded-full font-bold text-rose-700 hover:bg-rose-50 transition cursor-pointer"
+                className="px-3 py-1 bg-white dark:bg-gray-800 border border-rose-200 rounded-full font-bold text-rose-700 hover:bg-rose-50 transition cursor-pointer"
               >
                 Try Again
               </button>
@@ -471,7 +471,7 @@ export default function AdminPanel() {
 
           {/* 1. KPI Row: 4 cards (Total, Resolved, Pending, Escalated) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:border-gray-200 transition">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:border-gray-700 transition">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Complaints</span>
                 <span className="w-8 h-8 rounded-xl bg-violet-50 text-violet-700 flex items-center justify-center text-sm font-black">
@@ -479,14 +479,14 @@ export default function AdminPanel() {
                 </span>
               </div>
               <div className="mt-3 flex items-baseline justify-between">
-                <span className="text-3xl font-black text-gray-900 tracking-tight">{kpis.total}</span>
+                <span className="text-3xl font-black text-gray-900 dark:text-gray-100 tracking-tight">{kpis.total}</span>
                 <span className="text-[11px] font-bold text-gray-400">
                   {departmentFilter === 'ALL' ? 'All Depts' : 'In Scope'}
                 </span>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:border-gray-200 transition">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:border-gray-700 transition">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Resolved</span>
                 <span className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-sm font-black">
@@ -501,7 +501,7 @@ export default function AdminPanel() {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:border-gray-200 transition">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:border-gray-700 transition">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pending</span>
                 <span className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-sm font-black">
@@ -516,7 +516,7 @@ export default function AdminPanel() {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:border-gray-200 transition">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:border-gray-700 transition">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Escalated</span>
                 <span className="w-8 h-8 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center text-sm font-black">
@@ -533,11 +533,11 @@ export default function AdminPanel() {
           </div>
 
           {/* 4. Escalated & Overdue Panel (Above the fold, compact list) */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-3">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
-                <h3 className="text-sm font-extrabold text-gray-900 tracking-tight uppercase">
+                <h3 className="text-sm font-extrabold text-gray-900 dark:text-gray-100 tracking-tight uppercase">
                   Escalated & Overdue Tickets
                 </h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800">
@@ -557,7 +557,7 @@ export default function AdminPanel() {
                 </span>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100 border border-gray-100 rounded-2xl overflow-hidden">
+              <div className="divide-y divide-gray-100 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden">
                 {escalatedTickets.map((ticket) => (
                   <div
                     key={ticket.id}
@@ -570,8 +570,8 @@ export default function AdminPanel() {
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-black text-gray-900">#{ticket.id}</span>
-                          <span className="text-xs font-bold text-gray-700 truncate">{ticket.category}</span>
+                          <span className="text-xs font-black text-gray-900 dark:text-gray-100">#{ticket.id}</span>
+                          <span className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate">{ticket.category}</span>
                           <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
                             ⚠️ Overdue SLA
                           </span>
@@ -581,7 +581,7 @@ export default function AdminPanel() {
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-gray-500 truncate mt-0.5 max-w-xl">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5 max-w-xl">
                           {ticket.description}
                         </p>
                         <p className="text-[11px] text-gray-400 mt-0.5">
@@ -611,19 +611,19 @@ export default function AdminPanel() {
           {/* 2. Side-by-side charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Chart 1: Complaints per Ward (Total vs Resolved) */}
-            <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-4">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-extrabold text-gray-900 tracking-tight">
+                  <h3 className="text-sm font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
                     Complaints per Ward
                   </h3>
                   <p className="text-xs text-gray-400 mt-0.5">Total reported volume vs resolved</p>
                 </div>
                 <div className="flex items-center gap-3 text-[11px] font-bold">
-                  <span className="flex items-center gap-1 text-gray-500">
+                  <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
                     <span className="w-2.5 h-2.5 rounded-xs bg-[#e4dcff]"></span> Total
                   </span>
-                  <span className="flex items-center gap-1 text-gray-800">
+                  <span className="flex items-center gap-1 text-gray-800 dark:text-gray-200">
                     <span className="w-2.5 h-2.5 rounded-xs bg-[#7c5cff]"></span> Resolved
                   </span>
                 </div>
@@ -650,10 +650,10 @@ export default function AdminPanel() {
             </div>
 
             {/* Chart 2: Complaints by Category (Scoped to Active Department) */}
-            <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-4">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-extrabold text-gray-900 tracking-tight">
+                  <h3 className="text-sm font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
                     Complaints by Category
                   </h3>
                   <p className="text-xs text-gray-400 mt-0.5">
@@ -686,10 +686,10 @@ export default function AdminPanel() {
           </div>
 
           {/* 3. Ward Performance Table (Sorted by resolution rate ascending by default) */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-4">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <h3 className="text-sm font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
+                <h3 className="text-sm font-extrabold text-gray-900 dark:text-gray-100 tracking-tight flex items-center gap-2">
                   <span>🏆</span>
                   <span>Ward Performance & SLA Accountability</span>
                 </h3>
@@ -705,40 +705,40 @@ export default function AdminPanel() {
             <div className="overflow-x-auto">
               <table className="w-full text-xs text-left">
                 <thead>
-                  <tr className="border-b border-gray-100 text-gray-400 text-[11px] uppercase tracking-wider font-bold">
+                  <tr className="border-b border-gray-100 dark:border-gray-700 text-gray-400 text-[11px] uppercase tracking-wider font-bold">
                     <th
                       onClick={() => handleWardSort('ward')}
-                      className="pb-3 pr-4 font-bold cursor-pointer hover:text-gray-800 select-none"
+                      className="pb-3 pr-4 font-bold cursor-pointer hover:text-gray-800 dark:text-gray-200 select-none"
                     >
                       Ward Name {wardSortField === 'ward' ? (wardSortDirection === 'asc' ? '↑' : '↓') : '↕'}
                     </th>
                     <th
                       onClick={() => handleWardSort('total')}
-                      className="pb-3 px-4 font-bold text-center cursor-pointer hover:text-gray-800 select-none"
+                      className="pb-3 px-4 font-bold text-center cursor-pointer hover:text-gray-800 dark:text-gray-200 select-none"
                     >
                       Total {wardSortField === 'total' ? (wardSortDirection === 'asc' ? '↑' : '↓') : '↕'}
                     </th>
                     <th
                       onClick={() => handleWardSort('resolved')}
-                      className="pb-3 px-4 font-bold text-center cursor-pointer hover:text-gray-800 select-none"
+                      className="pb-3 px-4 font-bold text-center cursor-pointer hover:text-gray-800 dark:text-gray-200 select-none"
                     >
                       Resolved {wardSortField === 'resolved' ? (wardSortDirection === 'asc' ? '↑' : '↓') : '↕'}
                     </th>
                     <th
                       onClick={() => handleWardSort('resolutionRate')}
-                      className="pb-3 px-4 font-bold text-center cursor-pointer hover:text-gray-800 select-none"
+                      className="pb-3 px-4 font-bold text-center cursor-pointer hover:text-gray-800 dark:text-gray-200 select-none"
                     >
                       Resolution Rate % {wardSortField === 'resolutionRate' ? (wardSortDirection === 'asc' ? '↑' : '↓') : '↕'}
                     </th>
                     <th
                       onClick={() => handleWardSort('avgResolutionTimeHours')}
-                      className="pb-3 pl-4 font-bold text-right cursor-pointer hover:text-gray-800 select-none"
+                      className="pb-3 pl-4 font-bold text-right cursor-pointer hover:text-gray-800 dark:text-gray-200 select-none"
                     >
                       Avg Time (Hours) {wardSortField === 'avgResolutionTimeHours' ? (wardSortDirection === 'asc' ? '↑' : '↓') : '↕'}
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50 font-medium text-gray-700">
+                <tbody className="divide-y divide-gray-50 font-medium text-gray-700 dark:text-gray-300">
                   {sortedWardPerformance.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-8 text-center text-gray-400 text-xs">
@@ -747,14 +747,14 @@ export default function AdminPanel() {
                     </tr>
                   ) : (
                     sortedWardPerformance.map((row) => (
-                      <tr key={row.ward} className="hover:bg-gray-50/80 transition-colors">
-                        <td className="py-3.5 pr-4 font-bold text-gray-900 flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center text-[10px] text-gray-600 font-bold">
+                      <tr key={row.ward} className="hover:bg-gray-50 dark:bg-gray-900/80 transition-colors">
+                        <td className="py-3.5 pr-4 font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-400 font-bold">
                             {row.ward.replace('Ward ', 'W')}
                           </span>
                           <span>{row.ward}</span>
                         </td>
-                        <td className="py-3.5 px-4 text-center font-semibold text-gray-800">{row.total}</td>
+                        <td className="py-3.5 px-4 text-center font-semibold text-gray-800 dark:text-gray-200">{row.total}</td>
                         <td className="py-3.5 px-4 text-center font-semibold text-emerald-700">{row.resolved}</td>
                         <td className="py-3.5 px-4 text-center">
                           <div className="flex items-center justify-center gap-2">
@@ -783,7 +783,7 @@ export default function AdminPanel() {
                             </div>
                           </div>
                         </td>
-                        <td className="py-3.5 pl-4 text-right font-bold text-gray-800">
+                        <td className="py-3.5 pl-4 text-right font-bold text-gray-800 dark:text-gray-200">
                           {row.avgResolutionTimeHours > 0 ? `${row.avgResolutionTimeHours} hrs` : 'N/A'}
                         </td>
                       </tr>
@@ -802,7 +802,7 @@ export default function AdminPanel() {
       {activeTab === 'queue' && (
         <div className="space-y-6">
           {/* Search & Status Filter Bar */}
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             {/* Search */}
             <div className="relative flex-1">
               <input
@@ -810,13 +810,13 @@ export default function AdminPanel() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search tickets by ID, ward, description, or citizen..."
-                className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
+                className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
               />
               <span className="absolute left-3 top-2.5 text-gray-400 text-xs">🔍</span>
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-2 text-gray-400 hover:text-gray-600 text-xs cursor-pointer"
+                  className="absolute right-3 top-2 text-gray-400 hover:text-gray-600 dark:text-gray-400 text-xs cursor-pointer"
                 >
                   ✕
                 </button>
@@ -833,7 +833,7 @@ export default function AdminPanel() {
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                     filterStatus === st
                       ? 'bg-[#7c5cff] text-white shadow-xs'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100 hover:bg-gray-100'
                   }`}
                 >
                   {st === 'ALL' ? 'All Statuses' : st.replace('_', ' ')}
@@ -862,16 +862,16 @@ export default function AdminPanel() {
                 {filteredComplaints.map((complaint) => (
                   <div
                     key={complaint.id}
-                    className="bg-white rounded-2xl shadow-sm border border-gray-100/90 p-5 sm:p-6 transition hover:shadow-md"
+                    className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/90 p-5 sm:p-6 transition hover:shadow-md dark:shadow-none"
                   >
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
                       <div className="flex items-start gap-3.5 min-w-0">
-                        <div className="w-11 h-11 rounded-2xl bg-gray-50 flex items-center justify-center text-xl shadow-xs border border-gray-100 shrink-0">
+                        <div className="w-11 h-11 rounded-2xl bg-gray-50 dark:bg-gray-900 flex items-center justify-center text-xl shadow-xs border border-gray-100 dark:border-gray-700 shrink-0">
                           {getCategoryIcon(complaint.category)}
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-base font-extrabold text-gray-900">
+                            <span className="text-base font-extrabold text-gray-900 dark:text-gray-100">
                               {complaint.category || 'Grievance'}
                             </span>
                             <span className="text-xs font-bold text-gray-400">
@@ -893,8 +893,8 @@ export default function AdminPanel() {
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">
-                            📍 {complaint.location || 'Location Not Provided'} • Citizen: <span className="font-semibold text-gray-700">{complaint.citizen?.name || complaint.citizen?.email || 'Guest Citizen'}</span>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            📍 {complaint.location || 'Location Not Provided'} • Citizen: <span className="font-semibold text-gray-700 dark:text-gray-300">{complaint.citizen?.name || complaint.citizen?.email || 'Guest Citizen'}</span>
                           </p>
                         </div>
                       </div>
@@ -906,7 +906,7 @@ export default function AdminPanel() {
                         {complaint.status !== 'RESOLVED' && (
                           <button
                             onClick={() => handleOpenResolve(complaint)}
-                            className="px-4 py-1.5 rounded-full bg-gray-900 hover:bg-black text-white text-xs font-semibold shadow-sm transition inline-flex items-center gap-1.5 cursor-pointer"
+                            className="px-4 py-1.5 rounded-full bg-gray-900 hover:bg-black text-white text-xs font-semibold shadow-sm dark:shadow-none transition inline-flex items-center gap-1.5 cursor-pointer"
                           >
                             <span>✅</span>
                             <span>Resolve Issue →</span>
@@ -921,7 +921,7 @@ export default function AdminPanel() {
                         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">
                           Reported Details
                         </p>
-                        <p className="text-xs text-gray-700 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-100 min-h-[60px]">
+                        <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-900 p-3 rounded-xl border border-gray-100 dark:border-gray-700 min-h-[60px]">
                           {complaint.description || 'No description provided.'}
                         </p>
                       </div>
@@ -930,11 +930,11 @@ export default function AdminPanel() {
                         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">
                           Assigned Municipal Jurisdiction
                         </p>
-                        <div className="text-xs text-gray-700 bg-violet-50/50 p-3 rounded-xl border border-violet-100/80 min-h-[60px]">
+                        <div className="text-xs text-gray-700 dark:text-gray-300 bg-violet-50/50 p-3 rounded-xl border border-violet-100/80 min-h-[60px]">
                           <p className="font-semibold text-violet-900 mb-0.5">
                             🏢 {complaint.routedAuthority || 'Municipal Department Assigned'}
                           </p>
-                          <p className="text-gray-600 text-[11px]">
+                          <p className="text-gray-600 dark:text-gray-400 text-[11px]">
                             {complaint.aiSummary || 'Automated AI classification dispatched to department officers.'}
                           </p>
                         </div>
@@ -943,7 +943,7 @@ export default function AdminPanel() {
 
                     {/* Visual Evidence: Area Reference (Baseline) + Grievance (Report) + Resolution Proof */}
                     {(complaint.areaReferencePhotoUrl || complaint.photoData || complaint.photoUrl || complaint.resolutionPhotoUrl) && (
-                      <div className="mt-4 pt-3 border-t border-gray-100">
+                      <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
                             Visual Evidence & AI Verification
@@ -1064,16 +1064,16 @@ export default function AdminPanel() {
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mt-6">
-                  <div className="text-xs text-gray-500">
-                    Showing page <span className="font-bold text-gray-800">{page + 1}</span> of{' '}
-                    <span className="font-bold text-gray-800">{totalPages}</span> ({totalElements} total complaints)
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-none mt-6">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    Showing page <span className="font-bold text-gray-800 dark:text-gray-200">{page + 1}</span> of{' '}
+                    <span className="font-bold text-gray-800 dark:text-gray-200">{totalPages}</span> ({totalElements} total complaints)
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => fetchAllComplaints(page - 1)}
                       disabled={page === 0 || loading}
-                      className="px-3.5 py-1.5 rounded-full border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:bg-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
                     >
                       ← Previous
                     </button>
@@ -1085,7 +1085,7 @@ export default function AdminPanel() {
                           className={`w-8 h-8 rounded-full text-xs font-bold transition cursor-pointer ${
                             page === pageNum
                               ? 'bg-[#7c5cff] text-white shadow-xs'
-                              : 'text-gray-700 hover:bg-gray-100'
+                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100'
                           }`}
                         >
                           {pageNum + 1}
@@ -1095,7 +1095,7 @@ export default function AdminPanel() {
                     <button
                       onClick={() => fetchAllComplaints(page + 1)}
                       disabled={page >= totalPages - 1 || loading}
-                      className="px-3.5 py-1.5 rounded-full border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:bg-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
                     >
                       Next →
                     </button>
@@ -1105,9 +1105,9 @@ export default function AdminPanel() {
             </>
           ) : (
             !loading && (
-              <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100 text-xs text-gray-400 space-y-2">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 text-center shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700 text-xs text-gray-400 space-y-2">
                 <div className="text-3xl">📭</div>
-                <p className="font-semibold text-gray-700 text-sm">No complaints found for this department scope</p>
+                <p className="font-semibold text-gray-700 dark:text-gray-300 text-sm">No complaints found for this department scope</p>
                 <p className="text-gray-400 max-w-sm mx-auto">
                   Try switching the Department selector above to "All Municipal Departments" or changing the status filter.
                 </p>
@@ -1122,10 +1122,10 @@ export default function AdminPanel() {
       {/* ------------------------------------------------------------- */}
       {resolvingId && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-lg p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 w-full max-w-lg p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-700">
               <div>
-                <h3 className="text-lg font-extrabold text-gray-900 tracking-tight">
+                <h3 className="text-lg font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
                   Resolve Issue #{resolvingId}
                 </h3>
                 <p className="text-xs text-gray-400 mt-0.5">
@@ -1134,7 +1134,7 @@ export default function AdminPanel() {
               </div>
               <button
                 onClick={handleCloseResolve}
-                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center text-xs font-bold cursor-pointer"
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 dark:text-gray-400 flex items-center justify-center text-xs font-bold cursor-pointer"
               >
                 ✕
               </button>
@@ -1142,7 +1142,7 @@ export default function AdminPanel() {
 
             {/* Visual Context for Resolution Comparison */}
             {resolvingComplaint && (resolvingComplaint.areaReferencePhotoUrl || resolvingComplaint.photoData || resolvingComplaint.photoUrl) && (
-              <div className="bg-gray-50/80 p-3 rounded-2xl border border-gray-100 my-4">
+              <div className="bg-gray-50 dark:bg-gray-900/80 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 my-4">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
                   Verification Baseline & Grievance Context
                 </p>
@@ -1185,7 +1185,7 @@ export default function AdminPanel() {
             <form onSubmit={handleResolveSubmit} className="space-y-4 mt-5">
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                   Resolution Photo URL / Image Link
                 </label>
                 <input
@@ -1194,12 +1194,12 @@ export default function AdminPanel() {
                   placeholder="https://images.unsplash.com/photo-1541888946425-d0fbb180c5f5"
                   value={resolutionForm.resolutionPhotoUrl}
                   onChange={(e) => setResolutionForm(prev => ({ ...prev, resolutionPhotoUrl: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs sm:text-sm focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                   Resolution Description & Action Note
                 </label>
                 <textarea
@@ -1208,21 +1208,21 @@ export default function AdminPanel() {
                   placeholder="Details of repair or action taken by municipal department..."
                   value={resolutionForm.resolutionNote}
                   onChange={(e) => setResolutionForm(prev => ({ ...prev, resolutionNote: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs sm:text-sm focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#7c5cff]"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">
                 <button
                   type="button"
                   onClick={handleCloseResolve}
-                  className="px-4 py-2 rounded-full text-xs font-semibold text-gray-600 hover:bg-gray-100 transition cursor-pointer"
+                  className="px-4 py-2 rounded-full text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-full bg-[#7c5cff] hover:bg-[#6949f5] text-white text-xs font-semibold shadow-sm transition cursor-pointer"
+                  className="px-5 py-2 rounded-full bg-[#7c5cff] hover:bg-[#6949f5] text-white text-xs font-semibold shadow-sm dark:shadow-none transition cursor-pointer"
                 >
                   Submit Resolution Proof
                 </button>

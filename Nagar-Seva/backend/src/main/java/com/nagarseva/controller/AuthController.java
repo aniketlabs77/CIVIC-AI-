@@ -34,19 +34,24 @@ public class AuthController {
         response.put("name", user.getName());
         response.put("role", user.getRole());
         response.put("department", user.getDepartment());
+        response.put("notificationsEnabled", user.isNotificationsEnabled());
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/sync-profile")
-    public ResponseEntity<?> syncProfile(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> syncProfile(@RequestBody Map<String, Object> body) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof User user)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Unauthorized"));
         }
 
-        String roleStr = body.get("role");
-        String nameStr = body.get("name");
-        String deptStr = body.get("department");
+        String roleStr = body.get("role") != null ? body.get("role").toString() : null;
+        String nameStr = body.get("name") != null ? body.get("name").toString() : null;
+        String deptStr = body.get("department") != null ? body.get("department").toString() : null;
+        
+        if (body.containsKey("notificationsEnabled")) {
+            user.setNotificationsEnabled(Boolean.parseBoolean(body.get("notificationsEnabled").toString()));
+        }
 
         if (nameStr != null && !nameStr.isBlank()) {
             user.setName(nameStr.trim());
@@ -68,6 +73,7 @@ public class AuthController {
         response.put("name", user.getName());
         response.put("role", user.getRole());
         response.put("department", user.getDepartment());
+        response.put("notificationsEnabled", user.isNotificationsEnabled());
         return ResponseEntity.ok(response);
     }
 }

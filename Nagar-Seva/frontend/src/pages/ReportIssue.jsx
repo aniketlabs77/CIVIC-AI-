@@ -444,10 +444,10 @@ export default function ReportIssue() {
           <span>✨</span>
           <span>Powered by Gemini AI Vision & Smart Geocoding</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
           Report Civic Grievance
         </h1>
-        <p className="text-xs sm:text-sm text-gray-500 mt-1 max-w-xl mx-auto">
+        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-xl mx-auto">
           Pin the exact issue location on the map, use Gemini AI to polish your complaint, and get prompt municipal action.
         </p>
       </div>
@@ -462,7 +462,7 @@ export default function ReportIssue() {
 
       {/* Success Ticket Card */}
       {submittedTicket && (
-        <div className="bg-emerald-50/90 border-2 border-emerald-200 rounded-3xl p-6 shadow-sm animate-fade-in text-emerald-950 space-y-3">
+        <div className="bg-emerald-50/90 border-2 border-emerald-200 rounded-3xl p-6 shadow-sm dark:shadow-none animate-fade-in text-emerald-950 space-y-3">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <span className="px-2.5 py-0.5 bg-emerald-200 text-emerald-900 rounded-full text-[11px] font-extrabold uppercase tracking-wide">
@@ -479,7 +479,7 @@ export default function ReportIssue() {
           </div>
 
           {/* Email & Reminder Notification Confirmation */}
-          <div className="bg-white/80 rounded-2xl p-3 border border-emerald-200/80 text-xs space-y-1.5">
+          <div className="bg-white dark:bg-gray-800/80 rounded-2xl p-3 border border-emerald-200/80 text-xs space-y-1.5">
             <div className="flex items-center gap-2 text-emerald-900 font-bold">
               <span>📧</span>
               <span>Official Department Dispatch Sent: {submittedTicket.routedAuthority || 'Department Officer'}</span>
@@ -499,7 +499,7 @@ export default function ReportIssue() {
             </Link>
             <Link
               to="/track"
-              className="px-4 py-2 bg-white hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-300 transition"
+              className="px-4 py-2 bg-white dark:bg-gray-800 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-300 transition"
             >
               Track on Public Registry 🔍
             </Link>
@@ -508,11 +508,11 @@ export default function ReportIssue() {
       )}
 
       {/* Main Card Form */}
-      <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-card border border-gray-100/80">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-10 shadow-card dark:shadow-none border border-gray-100 dark:border-gray-700/80">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Category Select Pills */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
               Select Problem Category *
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -524,7 +524,7 @@ export default function ReportIssue() {
                   className={`p-3 rounded-2xl text-xs font-bold transition flex items-center gap-2 border ${
                     formData.category === cat.label
                       ? 'bg-violet-50 border-violet-500 text-violet-700 shadow-xs'
-                      : 'bg-gray-50/80 border-gray-100 text-gray-700 hover:bg-gray-100'
+                      : 'bg-gray-50 dark:bg-gray-900/80 border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100'
                   }`}
                 >
                   <span className="text-base">{cat.icon}</span>
@@ -537,7 +537,7 @@ export default function ReportIssue() {
           {/* Description + Gemini AI Assistant Button */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label htmlFor="description" className="block text-xs font-bold uppercase tracking-wider text-gray-500">
+              <label htmlFor="description" className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                 Issue Description *
               </label>
 
@@ -569,7 +569,7 @@ export default function ReportIssue() {
               value={formData.description}
               onChange={handleChange}
               placeholder="Describe the issue in your own words (or write a quick summary and click 'AI Assist' to automatically format it for municipal officers)..."
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs sm:text-sm text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-xs sm:text-sm text-gray-900 dark:text-gray-100 focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
             />
 
             {aiRefinedSuccess && (
@@ -584,7 +584,7 @@ export default function ReportIssue() {
           <div className="space-y-3 pt-2">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-700">
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
                   Pin Grievance Location on Map *
                 </label>
                 <p className="text-[11px] text-gray-400">
@@ -617,13 +617,13 @@ export default function ReportIssue() {
                     onChange={handleSearchChange}
                     onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
                     placeholder="Search place, landmark, or street (e.g., G.L. Bajaj, Krishna City, Connaught Place, Sector 15)..."
-                    className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs sm:text-sm text-gray-900 dark:text-gray-100 focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-violet-500"
                   />
                   {searchQuery && (
                     <button
                       type="button"
                       onClick={() => { setSearchQuery(''); setFormData(p => ({ ...p, location: '' })); setSuggestions([]); }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-600 dark:text-gray-400"
                     >
                       ✕
                     </button>
@@ -635,7 +635,7 @@ export default function ReportIssue() {
                     name="ward"
                     value={formData.ward}
                     onChange={handleChange}
-                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs sm:text-sm text-gray-900 dark:text-gray-100 font-bold focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-violet-500"
                   >
                     {wards.map(w => (
                       <option key={w} value={w}>{w}</option>
@@ -646,7 +646,7 @@ export default function ReportIssue() {
 
               {/* Autocomplete Dropdown */}
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute z-[1000] left-0 right-0 mt-1 bg-white rounded-2xl shadow-xl border border-gray-100 max-h-56 overflow-y-auto divide-y divide-gray-50">
+                <div className="absolute z-[1000] left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 max-h-56 overflow-y-auto divide-y divide-gray-50">
                   {suggestions.map((lm, idx) => (
                     <button
                       key={idx}
@@ -656,9 +656,9 @@ export default function ReportIssue() {
                     >
                       <span className="text-base text-violet-600 mt-0.5">📍</span>
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-bold text-gray-900 truncate">{lm.name}</div>
+                        <div className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate">{lm.name}</div>
                         {lm.subtitle && (
-                          <div className="text-[11px] text-gray-500 truncate">{lm.subtitle}</div>
+                          <div className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{lm.subtitle}</div>
                         )}
                       </div>
                       <span className="text-[10px] bg-violet-100 text-violet-700 px-2 py-0.5 rounded-md font-bold shrink-0">
@@ -671,7 +671,7 @@ export default function ReportIssue() {
             </div>
 
             {/* Interactive Leaflet Pin Map */}
-            <div className="h-64 sm:h-72 w-full rounded-2xl overflow-hidden border border-gray-200 shadow-inner relative z-10">
+            <div className="h-64 sm:h-72 w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-inner relative z-10">
               <MapContainer
                 center={mapCenter}
                 zoom={14}
@@ -701,13 +701,13 @@ export default function ReportIssue() {
                     <div className="text-xs">
                       <strong>📍 Grievance Spot</strong>
                       <p className="mt-1">{formData.location || 'Click or drag pin to adjust location'}</p>
-                      <span className="text-[10px] text-gray-500 font-bold block mt-1">{formData.ward}</span>
+                      <span className="text-[10px] text-gray-500 dark:text-gray-400 font-bold block mt-1">{formData.ward}</span>
                     </div>
                   </Popup>
                 </Marker>
               </MapContainer>
 
-              <div className="absolute bottom-3 left-3 right-3 z-[400] bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-gray-200/80 text-[11px] font-semibold text-gray-700 flex items-center justify-between shadow-xs">
+              <div className="absolute bottom-3 left-3 right-3 z-[400] bg-white dark:bg-gray-800/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700/80 text-[11px] font-semibold text-gray-700 dark:text-gray-300 flex items-center justify-between shadow-xs">
                 <span>📍 <strong>Pinned:</strong> {formData.location ? formData.location.slice(0, 45) + (formData.location.length > 45 ? '...' : '') : 'Click on map to choose spot'}</span>
                 <span className="text-violet-700 font-extrabold uppercase">{formData.ward}</span>
               </div>
@@ -716,11 +716,11 @@ export default function ReportIssue() {
 
           {/* Grievance Photo Evidence */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5">
               Grievance Photo Proof (For AI Verification)
             </label>
             <div
-              className="p-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl text-center hover:bg-gray-100/80 transition cursor-pointer"
+              className="p-4 bg-gray-50 dark:bg-gray-900 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl text-center hover:bg-gray-100/80 transition cursor-pointer"
               onClick={() => fileInputRef.current?.click()}
             >
               <input
@@ -742,7 +742,7 @@ export default function ReportIssue() {
               ) : (
                 <div className="py-4">
                   <span className="text-2xl mb-1 block">📷</span>
-                  <p className="text-xs font-bold text-gray-700">Click to upload photo evidence</p>
+                  <p className="text-xs font-bold text-gray-700 dark:text-gray-300">Click to upload photo evidence</p>
                   <p className="text-[11px] text-gray-400 mt-0.5">Supports PNG, JPG, JPEG (Max 2MB)</p>
                 </div>
               )}
@@ -754,7 +754,7 @@ export default function ReportIssue() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 px-6 rounded-full bg-gray-900 hover:bg-black text-white text-sm font-bold shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3.5 px-6 rounded-full bg-gray-900 hover:bg-black text-white text-sm font-bold shadow-md dark:shadow-none transition disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

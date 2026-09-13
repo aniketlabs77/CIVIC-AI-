@@ -464,42 +464,42 @@ function SafetyMap() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight flex items-center gap-2">
             <span>🛡️</span> Safe Route Navigator
           </h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             Real road routing that automatically inspects and highlights reported dark streetlight hazards
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           {/* Map Theme Toggle */}
-          <div className="flex bg-white p-1 rounded-full shadow-card border border-gray-100 text-xs font-semibold">
+          <div className="flex bg-white dark:bg-gray-800 p-1 rounded-full shadow-card dark:shadow-none border border-gray-100 dark:border-gray-700 text-xs font-semibold">
             <button
               type="button"
               onClick={() => setMapTheme('standard')}
-              className={`px-3 py-1 rounded-full transition ${mapTheme === 'standard' ? 'bg-accent text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
+              className={`px-3 py-1 rounded-full transition ${mapTheme === 'standard' ? 'bg-accent text-white shadow-xs' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100'}`}
             >
               🗺️ Street
             </button>
             <button
               type="button"
               onClick={() => setMapTheme('night')}
-              className={`px-3 py-1 rounded-full transition ${mapTheme === 'night' ? 'bg-dark text-amber-300 shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
+              className={`px-3 py-1 rounded-full transition ${mapTheme === 'night' ? 'bg-dark text-amber-300 shadow-xs' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100'}`}
             >
               🌙 Night
             </button>
             <button
               type="button"
               onClick={() => setMapTheme('satellite')}
-              className={`px-3 py-1 rounded-full transition ${mapTheme === 'satellite' ? 'bg-accent text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
+              className={`px-3 py-1 rounded-full transition ${mapTheme === 'satellite' ? 'bg-accent text-white shadow-xs' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100'}`}
             >
               🛰️ Satellite
             </button>
           </div>
 
           {/* Night Filter Checkbox */}
-          <label className="flex items-center gap-2 px-3.5 py-1.5 bg-white rounded-full text-xs font-bold text-gray-700 cursor-pointer shadow-card border border-gray-100 hover:bg-gray-50 transition">
+          <label className="flex items-center gap-2 px-3.5 py-1.5 bg-white dark:bg-gray-800 rounded-full text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer shadow-card dark:shadow-none border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:bg-gray-900 transition">
             <input
               type="checkbox"
               checked={showNightOnly}
@@ -518,7 +518,7 @@ function SafetyMap() {
         <div className="lg:col-span-4 flex flex-col gap-4">
           
           {/* Route Planning Card */}
-          <div className="bg-white rounded-3xl p-6 shadow-card border border-gray-100/80">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-card dark:shadow-none border border-gray-100 dark:border-gray-700/80">
             <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4 flex items-center gap-1.5">
               <span>📍</span> Plan Safe City Journey
             </h2>
@@ -526,7 +526,7 @@ function SafetyMap() {
             <form onSubmit={handleCalculateSafeRoute} className="space-y-4">
               {/* Start Point Search */}
               <div className="relative">
-                <label className="block text-xs font-bold text-gray-700 mb-1">
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                   Start Origin
                 </label>
                 <div className="flex gap-2">
@@ -536,7 +536,7 @@ function SafetyMap() {
                       value={startInputText}
                       onChange={(e) => handleStartInputChange(e.target.value)}
                       placeholder="Search landmark, hospital, street..."
-                      className="w-full pl-8 pr-7 py-2.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full pl-8 pr-7 py-2.5 text-xs sm:text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-accent"
                     />
                     <span className="absolute left-2.5 top-2.5 text-xs">🟢</span>
                     {startInputText && (
@@ -546,7 +546,7 @@ function SafetyMap() {
                           setStartInputText('');
                           setStartSuggestions([]);
                         }}
-                        className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600 text-xs"
+                        className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600 dark:text-gray-400 text-xs"
                       >
                         ✕
                       </button>
@@ -557,7 +557,7 @@ function SafetyMap() {
                     title="Use my GPS location"
                     onClick={() => handleUseCurrentLocation('start')}
                     disabled={locatingUser}
-                    className="p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition text-xs"
+                    className="p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-300 rounded-xl transition text-xs"
                   >
                     📍
                   </button>
@@ -565,7 +565,7 @@ function SafetyMap() {
                     type="button"
                     title="Click on map to place Start Pin"
                     onClick={() => setActivePinSelection('start')}
-                    className={`px-3 py-2 rounded-xl text-xs font-bold transition ${activePinSelection === 'start' ? 'bg-accent text-white shadow-xs' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition ${activePinSelection === 'start' ? 'bg-accent text-white shadow-xs' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-300'}`}
                   >
                     📌 Pin
                   </button>
@@ -573,13 +573,13 @@ function SafetyMap() {
 
                 {/* Suggestions Dropdown */}
                 {startSearching && (
-                  <div className="absolute z-50 left-0 right-0 mt-1 bg-white rounded-2xl shadow-xl border border-gray-100 p-3 text-xs text-gray-400 flex items-center gap-2">
+                  <div className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-3 text-xs text-gray-400 flex items-center gap-2">
                     <div className="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
                     <span>Searching locations...</span>
                   </div>
                 )}
                 {!startSearching && startSuggestions.length > 0 && (
-                  <div className="absolute z-50 left-0 right-0 mt-1 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden max-h-60 overflow-y-auto divide-y divide-gray-50">
+                  <div className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden max-h-60 overflow-y-auto divide-y divide-gray-50">
                     {startSuggestions.map((sug, i) => (
                       <button
                         key={i}
@@ -589,7 +589,7 @@ function SafetyMap() {
                       >
                         <span className="text-base mt-0.5">📍</span>
                         <div className="min-w-0 flex-1">
-                          <p className="font-bold text-xs text-gray-900 group-hover:text-accent truncate">
+                          <p className="font-bold text-xs text-gray-900 dark:text-gray-100 group-hover:text-accent truncate">
                             {sug.name}
                           </p>
                           <p className="text-[11px] text-gray-400 truncate">
@@ -604,7 +604,7 @@ function SafetyMap() {
 
               {/* Destination Point Search */}
               <div className="relative">
-                <label className="block text-xs font-bold text-gray-700 mb-1">
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                   Destination
                 </label>
                 <div className="flex gap-2">
@@ -614,7 +614,7 @@ function SafetyMap() {
                       value={endInputText}
                       onChange={(e) => handleEndInputChange(e.target.value)}
                       placeholder="Search destination, mall, metro..."
-                      className="w-full pl-8 pr-7 py-2.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full pl-8 pr-7 py-2.5 text-xs sm:text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-accent"
                     />
                     <span className="absolute left-2.5 top-2.5 text-xs">🔴</span>
                     {endInputText && (
@@ -624,7 +624,7 @@ function SafetyMap() {
                           setEndInputText('');
                           setEndSuggestions([]);
                         }}
-                        className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600 text-xs"
+                        className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600 dark:text-gray-400 text-xs"
                       >
                         ✕
                       </button>
@@ -634,7 +634,7 @@ function SafetyMap() {
                     type="button"
                     title="Click on map to place Destination Pin"
                     onClick={() => setActivePinSelection('end')}
-                    className={`px-3 py-2 rounded-xl text-xs font-bold transition ${activePinSelection === 'end' ? 'bg-accent text-white shadow-xs' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition ${activePinSelection === 'end' ? 'bg-accent text-white shadow-xs' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-300'}`}
                   >
                     📌 Pin
                   </button>
@@ -642,13 +642,13 @@ function SafetyMap() {
 
                 {/* Suggestions Dropdown */}
                 {endSearching && (
-                  <div className="absolute z-50 left-0 right-0 mt-1 bg-white rounded-2xl shadow-xl border border-gray-100 p-3 text-xs text-gray-400 flex items-center gap-2">
+                  <div className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-3 text-xs text-gray-400 flex items-center gap-2">
                     <div className="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
                     <span>Searching locations...</span>
                   </div>
                 )}
                 {!endSearching && endSuggestions.length > 0 && (
-                  <div className="absolute z-50 left-0 right-0 mt-1 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden max-h-60 overflow-y-auto divide-y divide-gray-50">
+                  <div className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden max-h-60 overflow-y-auto divide-y divide-gray-50">
                     {endSuggestions.map((sug, i) => (
                       <button
                         key={i}
@@ -658,7 +658,7 @@ function SafetyMap() {
                       >
                         <span className="text-base mt-0.5">📍</span>
                         <div className="min-w-0 flex-1">
-                          <p className="font-bold text-xs text-gray-900 group-hover:text-accent truncate">
+                          <p className="font-bold text-xs text-gray-900 dark:text-gray-100 group-hover:text-accent truncate">
                             {sug.name}
                           </p>
                           <p className="text-[11px] text-gray-400 truncate">
@@ -696,7 +696,7 @@ function SafetyMap() {
                   <button
                     type="button"
                     onClick={clearRoute}
-                    className="px-5 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-full transition border border-gray-200"
+                    className="px-5 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-full transition border border-gray-200 dark:border-gray-700"
                   >
                     Clear
                   </button>
@@ -705,7 +705,7 @@ function SafetyMap() {
             </form>
 
             {/* Quick Landmark Chips */}
-            <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
                 Popular Quick Presets
               </p>
@@ -724,7 +724,7 @@ function SafetyMap() {
                       }
                       setMapCenter({ lat: lm.lat, lng: lm.lng });
                     }}
-                    className="px-3 py-1 bg-gray-50 hover:bg-accent-light hover:text-accent text-gray-600 text-[11px] font-semibold rounded-full transition border border-gray-100"
+                    className="px-3 py-1 bg-gray-50 dark:bg-gray-900 hover:bg-accent-light hover:text-accent text-gray-600 dark:text-gray-400 text-[11px] font-semibold rounded-full transition border border-gray-100 dark:border-gray-700"
                   >
                     {lm.name}
                   </button>
@@ -735,7 +735,7 @@ function SafetyMap() {
 
           {/* Route Safety Intelligence Card */}
           {routeInfo && (
-            <div className={`rounded-3xl p-5 shadow-card border transition-all ${
+            <div className={`rounded-3xl p-5 shadow-card dark:shadow-none border transition-all ${
               routeInfo.safe ? 'bg-emerald-50/70 border-emerald-200/70' : 'bg-amber-50/70 border-amber-200/70'
             }`}>
               <div className="flex items-start gap-3">
@@ -754,11 +754,11 @@ function SafetyMap() {
                   <div className="flex gap-4 mt-3 pt-3 border-t border-black/5">
                     <div>
                       <span className="text-[10px] uppercase font-bold text-gray-400">Road Distance</span>
-                      <p className="text-sm font-black text-gray-900">{routeInfo.distanceKm} km</p>
+                      <p className="text-sm font-black text-gray-900 dark:text-gray-100">{routeInfo.distanceKm} km</p>
                     </div>
                     <div>
                       <span className="text-[10px] uppercase font-bold text-gray-400">Est. Time</span>
-                      <p className="text-sm font-black text-gray-900">~{routeInfo.durationMin} mins</p>
+                      <p className="text-sm font-black text-gray-900 dark:text-gray-100">~{routeInfo.durationMin} mins</p>
                     </div>
                     <div>
                       <span className="text-[10px] uppercase font-bold text-gray-400">Status</span>
@@ -775,10 +775,10 @@ function SafetyMap() {
                         Nearby Incidents along Road:
                       </p>
                       {routeInfo.riskyLocations.map((loc, idx) => (
-                        <div key={idx} className="bg-white/80 p-2 rounded-xl border border-amber-200 text-xs text-gray-700 flex items-center justify-between">
+                        <div key={idx} className="bg-white dark:bg-gray-800/80 p-2 rounded-xl border border-amber-200 text-xs text-gray-700 dark:text-gray-300 flex items-center justify-between">
                           <div>
-                            <span className="font-bold text-gray-900">{loc.category}</span>
-                            <span className="text-gray-500"> • {loc.location}</span>
+                            <span className="font-bold text-gray-900 dark:text-gray-100">{loc.category}</span>
+                            <span className="text-gray-500 dark:text-gray-400"> • {loc.location}</span>
                           </div>
                           <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 rounded-full">
                             {loc.timeOfDay}
@@ -793,11 +793,11 @@ function SafetyMap() {
           )}
 
           {/* Incident Legend */}
-          <div className="bg-white rounded-3xl p-5 shadow-card border border-gray-100/80">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-card dark:shadow-none border border-gray-100 dark:border-gray-700/80">
             <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
               Civic Risk Legend
             </h4>
-            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 font-medium">
+            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400 font-medium">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
                 <span>High Risk (3+ Incidents)</span>
@@ -819,7 +819,7 @@ function SafetyMap() {
         </div>
 
         {/* Right Side: Interactive Map Card */}
-        <div className="lg:col-span-8 bg-white rounded-3xl shadow-card border border-gray-100/80 overflow-hidden relative min-h-[560px] flex flex-col p-2">
+        <div className="lg:col-span-8 bg-white dark:bg-gray-800 rounded-3xl shadow-card dark:shadow-none border border-gray-100 dark:border-gray-700/80 overflow-hidden relative min-h-[560px] flex flex-col p-2">
           {activePinSelection && (
             <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1000] bg-dark/95 text-white text-xs px-5 py-2.5 rounded-full shadow-2xl backdrop-blur flex items-center gap-2 animate-bounce font-medium">
               <span>📍</span>
@@ -837,7 +837,7 @@ function SafetyMap() {
           {loading ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-3">
               <div className="w-9 h-9 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-xs font-semibold text-gray-500">Loading civic safety map...</p>
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Loading civic safety map...</p>
             </div>
           ) : error ? (
             <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
@@ -882,7 +882,7 @@ function SafetyMap() {
                     <Popup>
                       <div className="min-w-[210px] p-1 text-xs">
                         <div className="flex items-center justify-between gap-2 mb-1">
-                          <h4 className="font-bold text-gray-900">{item.category}</h4>
+                          <h4 className="font-bold text-gray-900 dark:text-gray-100">{item.category}</h4>
                           <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
                             item.riskLevel === 'HIGH' ? 'bg-rose-100 text-rose-800' :
                             item.riskLevel === 'MEDIUM' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
@@ -890,9 +890,9 @@ function SafetyMap() {
                             {item.riskLevel}
                           </span>
                         </div>
-                        <p className="text-gray-600 mb-1">{item.description}</p>
-                        <p className="text-[11px] text-gray-500 font-semibold">📍 {item.location} (Ward {item.ward})</p>
-                        <div className="flex items-center justify-between text-[10px] text-gray-400 mt-2 pt-2 border-t border-gray-100">
+                        <p className="text-gray-600 dark:text-gray-400 mb-1">{item.description}</p>
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400 font-semibold">📍 {item.location} (Ward {item.ward})</p>
+                        <div className="flex items-center justify-between text-[10px] text-gray-400 mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
                           <span>Time: {item.timeOfDay}</span>
                           <span>{item.status}</span>
                         </div>
@@ -907,7 +907,7 @@ function SafetyMap() {
                     <Popup>
                       <div className="text-center p-1 text-xs">
                         <span className="font-bold text-emerald-700">🟢 Start Point</span>
-                        <p className="font-medium text-gray-800 mt-0.5">{startPlace.name}</p>
+                        <p className="font-medium text-gray-800 dark:text-gray-200 mt-0.5">{startPlace.name}</p>
                         {startPlace.subtitle && (
                           <p className="text-[10px] text-gray-400">{startPlace.subtitle}</p>
                         )}
@@ -922,7 +922,7 @@ function SafetyMap() {
                     <Popup>
                       <div className="text-center p-1 text-xs">
                         <span className="font-bold text-rose-700">🔴 Destination</span>
-                        <p className="font-medium text-gray-800 mt-0.5">{endPlace.name}</p>
+                        <p className="font-medium text-gray-800 dark:text-gray-200 mt-0.5">{endPlace.name}</p>
                         {endPlace.subtitle && (
                           <p className="text-[10px] text-gray-400">{endPlace.subtitle}</p>
                         )}
@@ -972,8 +972,8 @@ function SafetyMap() {
                             <span>⚠️</span>
                             <span>Reported Hazard</span>
                           </div>
-                          <h4 className="font-bold text-gray-900">{loc.category}</h4>
-                          <p className="text-gray-600 mt-0.5">{loc.location}</p>
+                          <h4 className="font-bold text-gray-900 dark:text-gray-100">{loc.category}</h4>
+                          <p className="text-gray-600 dark:text-gray-400 mt-0.5">{loc.location}</p>
                           <p className="text-[10px] text-amber-800 font-bold mt-1">Risk at {loc.timeOfDay}</p>
                         </div>
                       </Popup>
